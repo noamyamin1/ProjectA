@@ -78,7 +78,7 @@ module backend_processing_unit #(
     logic [LABEL_W-1:0] p2_parent_addr, p2_parent_rdata;
     
     logic [LABEL_W-1:0] geo_ram_addr;
-    logic [31:0]        stats_area_rdata;
+    logic [31:0]        stats_area_rdata, stats_perim_rdata;
     logic [15:0]        stats_xmin_rdata, stats_xmax_rdata, stats_ymin_rdata, stats_ymax_rdata;
 
     logic [7:0]         fetch_gray_tdata;
@@ -267,6 +267,7 @@ module backend_processing_unit #(
         .parent_rdata    (p2_parent_rdata),
         .geo_ram_addr    (geo_ram_addr),
         .out_area        (stats_area_rdata),
+        .out_perimeter   (stats_perim_rdata),
         .out_xmin        (stats_xmin_rdata),
         .out_xmax        (stats_xmax_rdata),
         .out_ymin        (stats_ymin_rdata),
@@ -282,8 +283,10 @@ module backend_processing_unit #(
         .start       (state == ST_GEOMETRY),
         .max_label   (9'd511),
         .min_area_th (32'd300),
+        .circ_th_percent (8'd70), 
         .ram_addr    (geo_ram_addr),
         .area_rdata  (stats_area_rdata),
+        .perim_rdata (stats_perim_rdata),
         .xmin_rdata  (stats_xmin_rdata),
         .xmax_rdata  (stats_xmax_rdata),
         .ymin_rdata  (stats_ymin_rdata),
@@ -329,7 +332,8 @@ module backend_processing_unit #(
         .fetch_done         (fetch_done)
     );
 
-    template_matching_engine u_matcher (
+    template_matching_engine #(
+    ) u_matcher (
         .clk                (clk),
         .rst_n              (rst_n),
         .s_axis_gray_tdata  (fetch_gray_tdata),

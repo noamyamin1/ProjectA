@@ -187,7 +187,8 @@ module road_sign_detector_top #(
         .m_axis_tlast        (stream_mask_tlast)
     );
 
-    morphology_filter u_morphology (
+    morphology_filter #()
+    u_morphology (
         .clk                 (clk),
         .rst_n               (rst_n),
         .s_axis_tdata        (stream_mask_tdata),

@@ -1,5 +1,5 @@
 module ccl_uf_resolver #(
-    parameter int LABEL_W = 9
+    parameter int LABEL_W = 11
 )(
     input  logic               clk,
     input  logic               rst_n,
@@ -102,8 +102,9 @@ module ccl_uf_resolver #(
         end else begin
             case (state)
                 ST_IDLE: begin
-                    curr_label <= 9'd1;
-                    ptr_reg    <= 9'd1;
+                    // Modified to be parameter-agnostic
+                    curr_label <= 'd1;
+                    ptr_reg    <= 'd1;
                 end
                 
                 ST_CHECK_ROOT: begin
@@ -113,8 +114,8 @@ module ccl_uf_resolver #(
                 end
                 
                 ST_WRITE_ROOT: begin
-                    curr_label <= curr_label + 1;
-                    ptr_reg    <= curr_label + 1;
+                    curr_label <= curr_label + 1'b1;
+                    ptr_reg    <= curr_label + 1'b1;
                 end
                 
                 default: ;

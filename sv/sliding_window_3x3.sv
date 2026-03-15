@@ -26,10 +26,32 @@ module sliding_window_3x3 #(
     logic rdata_0, rdata_1;
     logic ruser_0, rlast_0;
     
-    assign rdata_0 = line_buf_0[wr_ptr];
-    assign rdata_1 = line_buf_1[wr_ptr];
-    assign ruser_0 = user_buf_0[wr_ptr];
-    assign rlast_0 = last_buf_0[wr_ptr];
+    logic [1:0] line_count;
+
+    // ==========================================
+    // Block: ASIC-Safe Line Counter 
+    // ==========================================
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            line_count <= '0;
+        end else if (s_valid) begin
+            if (s_user) begin
+                line_count <= '0;
+            end else if (wr_ptr == IMG_WIDTH - 1) begin
+                if (line_count < 2'd2)
+                    line_count <= line_count + 1'b1;
+            end
+        end
+    end
+
+    // ==========================================
+    // Block: Masked SRAM Reads
+    // ==========================================
+    assign rdata_0 = (line_count >= 2'd1) ? line_buf_0[wr_ptr] : 1'b0;
+    assign rdata_1 = (line_count == 2'd2) ? line_buf_1[wr_ptr] : 1'b0;
+    
+    assign ruser_0 = (line_count >= 2'd1) ? user_buf_0[wr_ptr] : 1'b0;
+    assign rlast_0 = (line_count >= 2'd1) ? last_buf_0[wr_ptr] : 1'b0;
 
     // ==========================================
     // Block 1: Line Buffer Write Logic (BRAM Inference)
@@ -45,13 +67,13 @@ module sliding_window_3x3 #(
     end
 
     // ==========================================
-    // Block 2: Write Pointer Counter
+    // Block 2: Write Pointer Counter (Updated)
     // ==========================================
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             wr_ptr <= '0;
         end else if (s_valid) begin
-            if (wr_ptr == IMG_WIDTH - 1)
+            if (s_user || wr_ptr == IMG_WIDTH - 1)
                 wr_ptr <= '0;
             else
                 wr_ptr <= wr_ptr + 1;

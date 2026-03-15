@@ -1,16 +1,19 @@
 module morphology_filter #(
-    parameter int IMG_WIDTH = 1920
+    parameter int IMG_WIDTH = 1920,
+    parameter int IMG_HEIGHT = 1080
 )(
     input  logic clk,
     input  logic rst_n,
 
     input  logic s_axis_tdata,
     input  logic s_axis_tvalid,
+    output logic s_axis_tready,
     input  logic s_axis_tuser,
     input  logic s_axis_tlast,
 
     output logic m_axis_tdata,
     output logic m_axis_tvalid,
+    input  logic m_axis_tready,
     output logic m_axis_tuser,
     output logic m_axis_tlast
 );

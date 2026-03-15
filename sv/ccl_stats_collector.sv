@@ -38,6 +38,7 @@ module ccl_stats_collector #(
     state_t state, next_state;
     logic [LABEL_W-1:0] init_addr;
     logic init_en;
+    logic stats_done_pulse;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -119,7 +120,6 @@ module ccl_stats_collector #(
         end
     end
 
-    logic stats_done_pulse;
     assign stats_done_pulse = (y_cnt == IMG_HEIGHT - 1) && s_axis_tlast && s_axis_tvalid;
     assign stats_done = (state == ST_DONE);
 

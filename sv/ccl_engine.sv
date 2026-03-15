@@ -61,7 +61,7 @@ module ccl_engine #(
     // ==========================================
     // Parent RAM (Inferred BRAM)
     // ==========================================
-    logic [LABEL_W-1:0] parent_ram [0:(1<<LABEL_W)-1];
+    logic [LABEL_W-1:0] parent_ram [0:(1<<LABEL_W)-1] = '{default: '0};
 
     always_ff @(posedge clk) begin
         if (ram_we) begin

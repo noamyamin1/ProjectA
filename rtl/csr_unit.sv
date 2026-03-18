@@ -88,18 +88,15 @@ module csr_unit #(
         end else begin
             if (~axi_awready && s_axi_awvalid && s_axi_wvalid && aw_en) begin
                 axi_awready <= 1'b1;
+                axi_wready  <= 1'b1;
                 aw_en       <= 1'b0;
             end else if (s_axi_bready && axi_bvalid) begin
                 axi_awready <= 1'b0;
+                axi_wready  <= 1'b0;
                 aw_en       <= 1'b1;
             end else begin
                 axi_awready <= 1'b0;
-            end
-
-            if (~axi_wready && s_axi_wvalid && s_axi_awvalid && aw_en) begin
-                axi_wready <= 1'b1;
-            end else begin
-                axi_wready <= 1'b0;
+                axi_wready  <= 1'b0;
             end
         end
     end
@@ -109,7 +106,7 @@ module csr_unit #(
         if (!rst_n) begin
             axi_bvalid <= 1'b0;
         end else begin
-            if (axi_awready && s_axi_awvalid && ~axi_bvalid && axi_wready && s_axi_wvalid) begin
+            if (axi_awready && axi_wready && ~axi_bvalid) begin
                 axi_bvalid <= 1'b1;
             end else if (s_axi_bready && axi_bvalid) begin
                 axi_bvalid <= 1'b0;
@@ -127,7 +124,7 @@ module csr_unit #(
             irq_ack             <= 1'b0;
         end else begin
             irq_ack <= 1'b0; 
-            if (axi_wready && s_axi_wvalid && axi_awready && s_axi_awvalid) begin
+            if (axi_awready && axi_wready) begin
                 case (s_axi_awaddr[7:2])
                     6'h00: begin 
                         if (s_axi_wstrb[0]) reg_enable <= s_axi_wdata[0];
@@ -161,7 +158,7 @@ module csr_unit #(
                 axi_arready <= 1'b0;
             end
 
-            if (axi_arready && s_axi_arvalid && ~axi_rvalid) begin
+            if (axi_arready && ~axi_rvalid) begin
                 axi_rvalid <= 1'b1;
             end else if (axi_rvalid && s_axi_rready) begin
                 axi_rvalid <= 1'b0;
@@ -174,7 +171,7 @@ module csr_unit #(
         if (!rst_n) begin
             axi_rdata <= '0;
         end else begin
-            if (axi_arready && s_axi_arvalid && ~axi_rvalid) begin
+            if (axi_arready && ~axi_rvalid) begin
                 case (s_axi_araddr[7:2])
                     6'h00: axi_rdata <= {31'd0, reg_enable};
                     6'h01: axi_rdata <= {16'd0, sts_best_class_id, 7'd0, sts_done_flag};

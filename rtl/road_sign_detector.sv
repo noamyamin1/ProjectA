@@ -169,6 +169,12 @@ module road_sign_detector_top #(
         .m_axi_bready        (m0_axi_bready)
     );
 
+    // ==========================================
+    // Stream Synchronization (Backpressure Fix)
+    // ==========================================
+    logic sys_axis_tvalid;
+    assign sys_axis_tvalid = s_axis_tvalid & s_axis_tready;
+
     red_mask_datapath #(
         .TDATA_W(AXIS_TDATA_W)
     ) u_red_mask (
@@ -177,7 +183,10 @@ module road_sign_detector_top #(
         .min_red_val         (cfg_min_red_val),
         .margin_shift        (cfg_margin_shift),
         .s_axis_tdata        (s_axis_tdata),
-        .s_axis_tvalid       (s_axis_tvalid),
+        
+        // Feed the masked VALID here instead of raw s_axis_tvalid
+        .s_axis_tvalid       (sys_axis_tvalid), 
+        
         .s_axis_tready       (),
         .s_axis_tuser        (s_axis_tuser),
         .s_axis_tlast        (s_axis_tlast),
@@ -187,18 +196,23 @@ module road_sign_detector_top #(
         .m_axis_tlast        (stream_mask_tlast)
     );
 
-    morphology_filter #()
+    morphology_filter #(
+        .IMG_WIDTH(IMG_W),
+        .IMG_HEIGHT(IMG_H)
+    )
     u_morphology (
-        .clk                 (clk),
-        .rst_n               (rst_n),
-        .s_axis_tdata        (stream_mask_tdata),
-        .s_axis_tvalid       (stream_mask_tvalid),
-        .s_axis_tuser        (stream_mask_tuser),
-        .s_axis_tlast        (stream_mask_tlast),
-        .m_axis_tdata        (stream_morph_tdata),
-        .m_axis_tvalid       (stream_morph_tvalid),
-        .m_axis_tuser        (stream_morph_tuser),
-        .m_axis_tlast        (stream_morph_tlast)
+        .clk           (clk),
+        .rst_n         (rst_n),
+        .s_axis_tdata  (stream_mask_tdata),
+        .s_axis_tvalid (stream_mask_tvalid),
+        .s_axis_tready (),                   // Added explicitly empty connection
+        .s_axis_tuser  (stream_mask_tuser),
+        .s_axis_tlast  (stream_mask_tlast),
+        .m_axis_tdata  (stream_morph_tdata),
+        .m_axis_tvalid (stream_morph_tvalid),
+        .m_axis_tready (1'b1),               // Added downstream ready
+        .m_axis_tuser  (stream_morph_tuser),
+        .m_axis_tlast  (stream_morph_tlast)
     );
 
     backend_processing_unit #(

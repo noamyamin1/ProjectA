@@ -1,2 +1,2 @@
-Best ID: 0
-Score: 383
+Best ID: 12
+Score: 149

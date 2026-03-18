@@ -52,11 +52,11 @@ module tb_backend_roi_matcher;
         
         // Load Templates
         $display("[%0t] Loading templates.mem...", $time);
-        $readmemh("design/work/ProjectA/sv/templates.mem", template_rom);
+        $readmemh("design/work/ProjectA/data/templates.mem", template_rom);
         
         // Load Image and Pack into 64-bit DDR
         $display("[%0t] Loading image_in.hex...", $time);
-        $readmemh("design/work/ProjectA/sv/image_in.hex", raw_pixel_mem);
+        $readmemh("design/work/ProjectA/data/image_in.hex", raw_pixel_mem);
         for (int i = 0; i < TOTAL_PIXELS/2; i++) begin
             main_ddr[i] = {8'h00, raw_pixel_mem[i*2+1], 8'h00, raw_pixel_mem[i*2]};
         end
@@ -124,9 +124,9 @@ module tb_backend_roi_matcher;
     // 4. File Logging (WITH FORCED FLUSH)
     // ==========================================
     initial begin
-        fd_gray = $fopen("rtl_fetched_gray.hex", "w");
-        fd_bin  = $fopen("rtl_binary_roi.hex", "w");
-        fd_res  = $fopen("rtl_final_results.txt", "w");
+        fd_gray = $fopen("design/work/ProjectA/data/rtl_fetched_gray.hex", "w");
+        fd_bin  = $fopen("design/work/ProjectA/data/rtl_binary_roi.hex", "w");
+        fd_res  = $fopen("design/work/ProjectA/data/rtl_final_results.txt", "w");
         if (fd_gray == 0) $display("ERROR: Could not create output files.");
     end
 
@@ -219,7 +219,7 @@ module tb_backend_roi_matcher;
         clk = 0; rst_n = 0; start_trigger = 0; base_addr = 0;
 
         // Auto-extract ROI coordinates
-        fd_in = $fopen("design/work/ProjectA/sv/detected_boxes.txt", "r");
+        fd_in = $fopen("design/work/ProjectA/data/detected_boxes.txt", "r");
         if (fd_in) begin
             status = $fscanf(fd_in, "%d,%d,%d,%d,%d,%d,%d,%d,%d", d_lbl, roi_xmin, roi_ymin, roi_xmax, roi_ymax, d_w, d_h, d_area, d_ar);
             $fclose(fd_in);

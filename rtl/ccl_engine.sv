@@ -1,7 +1,7 @@
 module ccl_engine #(
-    parameter int IMG_WIDTH  = 1920,
-    parameter int IMG_HEIGHT = 1080,
-    parameter int LABEL_W    = 9
+    parameter int IMG_WIDTH  = 2872,
+    parameter int IMG_HEIGHT = 1617,
+    parameter int LABEL_W    = 16
 )(
     input  logic               clk,
     input  logic               rst_n,
@@ -18,7 +18,12 @@ module ccl_engine #(
 
     // Interface for Pass 2 (Read-only access to Parent RAM)
     input  logic [LABEL_W-1:0] p2_parent_addr,
-    output logic [LABEL_W-1:0] p2_parent_rdata
+    output logic [LABEL_W-1:0] p2_parent_rdata,
+
+    // ADDED: Output stream for DMA Pass 1 Write
+    output logic [LABEL_W-1:0] p1_axis_tdata,
+    output logic               p1_axis_tvalid,
+    output logic               p1_axis_tlast
 );
 
     // ==========================================
@@ -39,6 +44,11 @@ module ccl_engine #(
     logic               res_parent_we;
     logic [LABEL_W-1:0] res_parent_addr;
     logic [LABEL_W-1:0] res_parent_wdata;
+
+    // Routing Pass 1 stream to output
+    assign p1_axis_tdata  = pass1_tdata;
+    assign p1_axis_tvalid = pass1_tvalid;
+    assign p1_axis_tlast  = pass1_tlast;
 
     // RAM Ports
     logic               ram_we;

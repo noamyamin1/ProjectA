@@ -93,24 +93,30 @@ module sliding_window_3x3 #(
             valid_sr <= '0;
             user_sr  <= '0;
             last_sr  <= '0;
-        end else if (s_valid) begin
-            window[0][0] <= s_data;
-            window[0][1] <= window[0][0];
-            window[0][2] <= window[0][1];
-            
-            window[1][0] <= rdata_0;
-            window[1][1] <= window[1][0];
-            window[1][2] <= window[1][1];
-            
-            window[2][0] <= rdata_1;
-            window[2][1] <= window[2][0];
-            window[2][2] <= window[2][1];
-            
-            valid_sr <= {valid_sr[0], 1'b1};
-            user_sr  <= {user_sr[0], ruser_0};
-            last_sr  <= {last_sr[0], rlast_0};
         end else begin
-            valid_sr <= {valid_sr[0], 1'b0};
+            // Shift pipeline uniformly (insert bubbles if !s_valid)
+            valid_sr[0] <= s_valid;
+            valid_sr[1] <= valid_sr[0];
+            
+            last_sr[0]  <= s_valid ? s_last : 1'b0;
+            last_sr[1]  <= last_sr[0];
+            
+            user_sr[0]  <= s_valid ? s_user : 1'b0;
+            user_sr[1]  <= user_sr[0];
+
+            if (s_valid) begin
+                window[0][0] <= s_data;
+                window[0][1] <= window[0][0];
+                window[0][2] <= window[0][1];
+                
+                window[1][0] <= rdata_0;
+                window[1][1] <= window[1][0];
+                window[1][2] <= window[1][1];
+                
+                window[2][0] <= rdata_1;
+                window[2][1] <= window[2][0];
+                window[2][2] <= window[2][1];
+            end
         end
     end
 

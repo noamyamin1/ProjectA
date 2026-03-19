@@ -113,6 +113,9 @@ module backend_processing_unit #(
     logic [AXI_DATA_W-1:0] roi_rdata;
     logic                  roi_rlast, roi_rvalid, roi_rready;
 
+    logic [7:0] matcher_best_class_id; // Wire from Matcher
+    logic [7:0] latched_best_class_id; // Register for CSR
+
     // ==========================================
     // DMA WRITER: Pack Pass 1 Labels to DDR
     // ==========================================
@@ -131,7 +134,7 @@ module backend_processing_unit #(
             p1_pack_cnt <= '0;
             p1_pack_data<= '0;
         end else if (state == ST_IDLE) begin
-            p1_addr_cnt <= cfg_frame_base_addr + 32'h0100_0000;
+            p1_addr_cnt <= cfg_frame_base_addr + 32'h0200_0000;
             p1_pack_cnt <= '0;
             p1_awvalid  <= 1'b0;
             p1_wvalid   <= 1'b0;
@@ -191,7 +194,7 @@ module backend_processing_unit #(
             p2_stream_tlast  <= 1'b0;
         end else if (state == ST_IDLE) begin
             p2_rstate        <= R_IDLE;
-            p2_addr_cnt      <= cfg_frame_base_addr + 32'h0100_0000;
+            p2_addr_cnt      <= cfg_frame_base_addr + 32'h0200_0000;
             p2_pixel_cnt     <= '0;
             p2_arvalid       <= 1'b0;
             p2_rready        <= 1'b0;
@@ -340,6 +343,23 @@ module backend_processing_unit #(
     end
 
     // ==========================================
+    // Result Latching for CSR
+    // ==========================================
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            latched_best_class_id <= 8'd0;
+        end else begin
+            // Sample the result ONLY when the Matcher explicitly says it's done
+            if (state == ST_TEMPLATE_MACH && match_done) begin
+                latched_best_class_id <= matcher_best_class_id;
+            end
+        end
+    end
+    
+    // Connect the LATCHED value to the output port
+    assign sts_best_class_id = latched_best_class_id;
+
+    // ==========================================
     // Instances
     // ==========================================
     ccl_engine #(
@@ -447,7 +467,7 @@ module backend_processing_unit #(
         .template_ram_addr  (tmpl_ram_addr),
         .template_ram_rdata (tmpl_ram_rdata),
         .match_done         (match_done),
-        .best_class_id      (sts_best_class_id),
+        .best_class_id      (matcher_best_class_id),
         .best_score         (best_score)
     );
 

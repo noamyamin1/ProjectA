@@ -1,0 +1,75 @@
+Chronologic VCS simulator copyright 1991-2022
+Contains Synopsys proprietary information.
+Compiler version T-2022.06-SP2_Full64; Runtime version T-2022.06-SP2_Full64;  Mar 19 15:18 2026
+[0] System Asserting Reset...
+[200000] Configuring Base Address to 0x8000_0000
+[235000] Enabling System
+[275000] Starting Video RGB Stream...
+[275000] Loading image into memory array... This is much faster!
+[275000] Loading complete. Streaming to DUT...
+[325000] [HW-FSM] Transitioned: ST_IDLE -> ST_PASS1_STREAM
+[17953835000] MORPH MISMATCH: Expected 1, Got 0
+[18001835000] MORPH MISMATCH: Expected 1, Got 0
+[18049835000] MORPH MISMATCH: Expected 1, Got 0
+[18049885000] MORPH MISMATCH: Expected 0, Got 1
+[51840245000] Video Stream Complete. Waiting for Processing...
+[51840305000] [HW-FSM] Transitioned: ST_PASS1_STREAM -> ST_CCL_RESOLVE
+[51876445000] [HW-FSM] Transitioned: ST_CCL_RESOLVE -> ST_PASS2_STATS
+[55716455000] [HW-DMA] Reader pushed line 100 / 1080 to CCL Stats
+[59556455000] [HW-DMA] Reader pushed line 200 / 1080 to CCL Stats
+[63396455000] [HW-DMA] Reader pushed line 300 / 1080 to CCL Stats
+[67236455000] [HW-DMA] Reader pushed line 400 / 1080 to CCL Stats
+[71076455000] [HW-DMA] Reader pushed line 500 / 1080 to CCL Stats
+[74916455000] [HW-DMA] Reader pushed line 600 / 1080 to CCL Stats
+[78756455000] [HW-DMA] Reader pushed line 700 / 1080 to CCL Stats
+[82596455000] [HW-DMA] Reader pushed line 800 / 1080 to CCL Stats
+[86436455000] [HW-DMA] Reader pushed line 900 / 1080 to CCL Stats
+[90276455000] [HW-DMA] Reader pushed line 1000 / 1080 to CCL Stats
+[93348455000] [HW-FSM] Transitioned: ST_PASS2_STATS -> ST_GEOMETRY
+[95969835000] [HW-FSM] Transitioned: ST_GEOMETRY -> ST_ROI_FETCH
+[96174705000] [HW-FSM] Transitioned: ST_ROI_FETCH -> ST_TEMPLATE_MACH
+[96243975000] RTL_SCORE_TABLE: Template  0 (bumpe) | Mismatches: 289
+[96272325000] RTL_SCORE_TABLE: Template  1 (100 vel) | Mismatches: 327
+[96300675000] RTL_SCORE_TABLE: Template  2 (yeald) | Mismatches: 321
+[96329025000] RTL_SCORE_TABLE: Template  3 (no entry) | Mismatches: 310
+[96357375000] RTL_SCORE_TABLE: Template  4 (T right) | Mismatches: 256
+[96385725000] RTL_SCORE_TABLE: Template  5 (30 vel) | Mismatches: 343
+[96414075000] RTL_SCORE_TABLE: Template  6 (slippery) | Mismatches: 213
+[96442425000] RTL_SCORE_TABLE: Template  7 (40 vel) | Mismatches: 326
+[96470775000] RTL_SCORE_TABLE: Template  8 (50 vel) | Mismatches: 352
+[96499125000] RTL_SCORE_TABLE: Template  9 (right intersection) | Mismatches: 271
+[96527475000] RTL_SCORE_TABLE: Template 10 (60 vel) | Mismatches: 337
+[96555825000] RTL_SCORE_TABLE: Template 11 (left intersection) | Mismatches: 276
+[96584175000] RTL_SCORE_TABLE: Template 12 (70 vel) | Mismatches: 303
+[96612525000] RTL_SCORE_TABLE: Template 13 (people) | Mismatches: 267
+[96640875000] RTL_SCORE_TABLE: Template 14 (slippery 2) | Mismatches: 195
+[96669225000] RTL_SCORE_TABLE: Template 15 (urban area) | Mismatches: 346
+[96697575000] RTL_SCORE_TABLE: Template 16 (left turn) | Mismatches: 223
+[96725925000] RTL_SCORE_TABLE: Template 17 (right turn) | Mismatches: 215
+[96754275000] RTL_SCORE_TABLE: Template 18 (road works) | Mismatches: 246
+[96754295000] [HW-FSM] Transitioned: ST_TEMPLATE_MACH -> ST_DONE
+[96754305000] IRQ Received! Processing complete.
+----------------------------------------
+DIRECT PROBE FROM HARDWARE
+Class ID    : 14 (slippery 2)
+BBox X-Axis : [1554, 1688]
+BBox Y-Axis : [568, 677]
+----------------------------------------
+----------------------------------------
+Class ID    : 14 (slippery 2)
+BBox X-Axis : [1554, 1688]
+BBox Y-Axis : [568, 677]
+----------------------------------------
+========================================
+        INTERMEDIATE STAGE REPORT       
+========================================
+RED MASK:   MATCHED! (Passed)
+MORPHOLOGY: FAILED with 10441 mismatches
+========================================
+Dumped 4095 ROI pixels to rtl_fetched_gray.hex
+$finish called from file "design/work/ProjectA/tb/road_sign_detector_top_tb.sv", line 439.
+$finish at simulation time          96755465000
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 96755465000 ps
+CPU Time:     57.120 seconds;       Data structure size:   0.1Mb
+Thu Mar 19 15:19:47 2026

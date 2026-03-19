@@ -3,7 +3,7 @@
 module template_matching_engine #(
     parameter int TARGET_W = 64,
     parameter int TARGET_H = 64,
-    parameter int TEMPLATE_COUNT = 50,
+    parameter int TEMPLATE_COUNT = 19,
     parameter int TEMPLATE_ADDR_W = 11 
 )(
     input  logic         clk,
@@ -77,6 +77,7 @@ module template_matching_engine #(
     logic [31:0] pl_raw_roi_row;
     logic [31:0] pl_shifted_roi_row;
     logic [31:0] pl_rom_data;
+    logic [31:0] pl_valid_mask;
     
     logic pl_eval_valid_1;
     logic pl_eval_valid_2;
@@ -105,7 +106,7 @@ module template_matching_engine #(
 
     // --- Input ROI Buffer & Mean ---
     always_ff @(posedge clk) begin
-        if (state == ST_RCV_ROI && s_axis_gray_tvalid) begin
+        if ((state == ST_IDLE || state == ST_RCV_ROI) && s_axis_gray_tvalid) begin
             roi_buf[pixel_cnt] <= s_axis_gray_tdata;
         end
         buf_rd_data <= roi_buf[buf_rd_addr];
@@ -118,21 +119,33 @@ module template_matching_engine #(
             roi_sum   <= '0;
         end else begin
             if (state == ST_IDLE) begin
-                pixel_cnt <= '0;
-                roi_sum   <= '0;
+                if (s_axis_gray_tvalid) begin
+                    pixel_cnt <= 12'd1;
+                    roi_sum   <= '0;   
+                end else begin
+                    pixel_cnt <= '0;
+                    roi_sum   <= '0;
+                end
             end else if (state == ST_RCV_ROI && s_axis_gray_tvalid) begin
                 pixel_cnt <= pixel_cnt + 1;
-                roi_sum   <= roi_sum + s_axis_gray_tdata;
+                
+                if (pixel_cnt[11:6] >= 16 && pixel_cnt[11:6] < 48 &&
+                    pixel_cnt[5:0] >= 16 && pixel_cnt[5:0] < 48) begin
+                    roi_sum <= roi_sum + s_axis_gray_tdata;
+                end
             end
         end
     end
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) roi_mean <= '0;
-        else if (state == ST_CALC_MEAN) roi_mean <= roi_sum[19:12];
+        else if (state == ST_CALC_MEAN) roi_mean <= roi_sum[17:10]; 
     end
 
     // --- Binarization Stage ---
+    logic [5:0] binarize_y_pos;
+    assign binarize_y_pos = buf_rd_addr_d1[11:6];
+    
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             buf_rd_addr <= '0;
@@ -146,31 +159,42 @@ module template_matching_engine #(
             end else if (state == ST_BINARIZE) begin
                 if (buf_rd_addr < 4095) buf_rd_addr <= buf_rd_addr + 1;
 
-                if (buf_rd_addr_d1 >= (16*64 + 16) && buf_rd_addr_d1 < (48*64 - 16)) begin
-                    if (binarize_x_pos >= 16 && binarize_x_pos < 48) begin
-                        
-                        bin_roi[bin_row_cnt][5'd31 - bin_col_cnt] <= binarize_bit_val;
-                        
-                        if (bin_col_cnt == 5'd31) begin
-                            bin_col_cnt <= '0;
-                            bin_row_cnt <= bin_row_cnt + 1;
-                        end else begin
-                            bin_col_cnt <= bin_col_cnt + 1;
-                        end
+                if (binarize_y_pos >= 16 && binarize_y_pos < 48 && 
+                    binarize_x_pos >= 16 && binarize_x_pos < 48) begin
+                    
+                    bin_roi[bin_row_cnt][5'd31 - bin_col_cnt] <= binarize_bit_val;
+                    
+                    if (bin_col_cnt == 5'd31) begin
+                        bin_col_cnt <= '0;
+                        bin_row_cnt <= bin_row_cnt + 1;
+                    end else begin
+                        bin_col_cnt <= bin_col_cnt + 1;
                     end
                 end
             end
         end
     end
 
-    // --- Pipeline Stage 1: Fetch Row ---
+    // --- Pipeline Stage 1: Fetch Row & Calc Mask ---
+    logic [31:0] current_x_mask;
+    
+    always_comb begin
+        if (actual_x > 0)      current_x_mask = 32'hFFFF_FFFF << actual_x;
+        else if (actual_x < 0) current_x_mask = 32'hFFFF_FFFF >> (-actual_x);
+        else                   current_x_mask = 32'hFFFF_FFFF;
+        
+        if (actual_y < 0 || actual_y >= 32 || match_row_cnt >= 32) begin
+            current_x_mask = 32'h0000_0000;
+        end
+    end
+
     always_ff @(posedge clk) begin
         if (state == ST_MATCHING) begin
             pl_raw_roi_row <= raw_row;
         end
     end
 
-    // --- Pipeline Stage 2: Shift Row & Capture ROM Data ---
+    // --- Pipeline Stage 2: Shift Row, Capture ROM & Mask ---
     always_ff @(posedge clk) begin
         if (state == ST_MATCHING) begin
             if (actual_x > 0)
@@ -180,13 +204,15 @@ module template_matching_engine #(
             else
                 pl_shifted_roi_row <= pl_raw_roi_row;
 
-            pl_rom_data <= template_ram_rdata;
+            pl_rom_data   <= template_ram_rdata;
+            pl_valid_mask <= current_x_mask;
         end
     end
 
-    // --- Pipeline Stage 3: Combinatorial Popcount ---
+    // --- Pipeline Stage 3: Masked Popcount ---
     always_comb begin
-        xor_result = pl_shifted_roi_row ^ pl_rom_data;
+        xor_result = (pl_shifted_roi_row ^ pl_rom_data) & pl_valid_mask;
+        
         popcount_val = '0;
         for (int i = 0; i < 32; i++) begin
             popcount_val = popcount_val + xor_result[i];
@@ -232,28 +258,22 @@ module template_matching_engine #(
                 min_class_id       <= '0;
             end else if (state == ST_MATCHING) begin
                 
-                // Pipeline Execution
                 if (match_row_cnt < 6'd34) begin
-                    
-                    // Generate Addresses
                     if (match_row_cnt < 6'd32) begin
                         template_ram_addr <= (template_idx * 32) + match_row_cnt;
                     end
                     match_row_cnt <= match_row_cnt + 1;
                     
-                    // Accumulate Valid Scores safely
                     if (eval_valid) begin
                         current_mismatches <= current_mismatches + popcount_val;
                     end
                     
                 end else begin
-                    // Cycle 34: Safely Compare and Reset
                     if (current_mismatches < min_mismatches) begin
                         min_mismatches <= current_mismatches;
                         min_class_id   <= template_idx;
                     end
                     
-                    // Advance Shift Engine
                     if (dx_idx < 4'd8) begin
                         dx_idx <= dx_idx + 1;
                     end else begin

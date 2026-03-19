@@ -6,25 +6,22 @@ module red_mask_datapath #(
     input  logic               clk,
     input  logic               rst_n,
     
-    // Configuration from CSR
     input  logic [7:0]         min_red_val,
     input  logic [2:0]         margin_shift,
     
-    // AXI4-Stream Slave Interface (Input RGB)
     input  logic [TDATA_W-1:0] s_axis_tdata,
     input  logic               s_axis_tvalid,
     output logic               s_axis_tready,
     input  logic               s_axis_tuser,
     input  logic               s_axis_tlast,
     
-    // AXI4-Stream Master Interface (Output 1-bit Mask)
     output logic               m_axis_tdata,
     output logic               m_axis_tvalid,
+    input  logic               m_axis_tready, // NEW PORT
     output logic               m_axis_tuser,
     output logic               m_axis_tlast
 );
 
-    // Assuming RGB888 format
     localparam int R_MSB = 23;
     localparam int R_LSB = 16;
     localparam int G_MSB = 15;
@@ -32,9 +29,8 @@ module red_mask_datapath #(
     localparam int B_MSB = 7;
     localparam int B_LSB = 0;
 
-    // We can always accept data in this pipeline 
-    // (Assuming downstream Morphology block uses Line Buffers and doesn't stall)
-    assign s_axis_tready = 1'b1;
+    // Pass backpressure directly to the upstream source (TB)
+    assign s_axis_tready = m_axis_tready;
 
     // ==========================================
     // Pipeline Stage 1: Margin & Additions
@@ -57,7 +53,7 @@ module red_mask_datapath #(
             stg1_tvalid        <= 1'b0;
             stg1_tuser         <= 1'b0;
             stg1_tlast         <= 1'b0;
-        end else begin
+        end else if (m_axis_tready) begin // FREEZE PIPELINE IF DOWNSTREAM STALLS
             stg1_tvalid <= s_axis_tvalid;
             
             if (s_axis_tvalid) begin
@@ -70,7 +66,6 @@ module red_mask_datapath #(
                 stg1_g <= g_in;
                 stg1_b <= b_in;
                 
-                // 9-bit addition to prevent overflow
                 stg1_g_plus_margin <= {1'b0, g_in} + {1'b0, margin};
                 stg1_b_plus_margin <= {1'b0, b_in} + {1'b0, margin};
                 
@@ -94,7 +89,7 @@ module red_mask_datapath #(
             stg2_tvalid <= 1'b0;
             stg2_tuser  <= 1'b0;
             stg2_tlast  <= 1'b0;
-        end else begin
+        end else if (m_axis_tready) begin // FREEZE PIPELINE IF DOWNSTREAM STALLS
             stg2_tvalid <= stg1_tvalid;
             
             if (stg1_tvalid) begin

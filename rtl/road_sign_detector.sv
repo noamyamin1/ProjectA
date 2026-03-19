@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module road_sign_detector_top #(
     parameter int AXI_LITE_ADDR_W = 12,
     parameter int AXI_LITE_DATA_W = 32,
@@ -10,7 +12,6 @@ module road_sign_detector_top #(
     input  logic clk,
     input  logic rst_n,
 
-    // AXI4-Lite Slave Interface (Control & Status)
     input  logic [AXI_LITE_ADDR_W-1:0] s_axi_awaddr,
     input  logic                       s_axi_awvalid,
     output logic                       s_axi_awready,
@@ -29,14 +30,12 @@ module road_sign_detector_top #(
     output logic                       s_axi_rvalid,
     input  logic                       s_axi_rready,
 
-    // AXI4-Stream Slave Interface (Raw RGB Video Input)
     input  logic [AXIS_TDATA_W-1:0]    s_axis_tdata,
     input  logic                       s_axis_tvalid,
     output logic                       s_axis_tready,
     input  logic                       s_axis_tuser,
     input  logic                       s_axis_tlast,
 
-    // AXI4 Master 0: Dedicated RGB Frame Writer
     output logic [AXI_FULL_ADDR_W-1:0] m0_axi_awaddr,
     output logic [7:0]                 m0_axi_awlen,
     output logic [2:0]                 m0_axi_awsize,
@@ -52,7 +51,6 @@ module road_sign_detector_top #(
     input  logic                       m0_axi_bvalid,
     output logic                       m0_axi_bready,
 
-    // AXI4 Master 1: Backend Processing (CCL & ROI Fetch)
     output logic [AXI_FULL_ADDR_W-1:0] m1_axi_awaddr,
     output logic [7:0]                 m1_axi_awlen,
     output logic [2:0]                 m1_axi_awsize,
@@ -104,6 +102,21 @@ module road_sign_detector_top #(
     logic        stream_morph_tuser;
     logic        stream_morph_tlast;
 
+    // ==========================================
+    // AXI-Stream Broadcaster (Fork) Logic
+    // ==========================================
+    logic rgb_writer_tready;
+    logic red_mask_tready;
+    logic morph_tready_in;
+
+    assign s_axis_tready = rgb_writer_tready & red_mask_tready;
+
+    logic valid_to_writer;
+    logic valid_to_red_mask;
+
+    assign valid_to_writer   = s_axis_tvalid & red_mask_tready;
+    assign valid_to_red_mask = s_axis_tvalid & rgb_writer_tready;
+
     csr_unit #(
         .ADDR_W(AXI_LITE_ADDR_W),
         .DATA_W(AXI_LITE_DATA_W)
@@ -149,10 +162,10 @@ module road_sign_detector_top #(
         .enable              (cfg_enable),
         .base_addr           (cfg_frame_base_addr),
         .s_axis_tdata        (s_axis_tdata),
-        .s_axis_tvalid       (s_axis_tvalid),
+        .s_axis_tvalid       (valid_to_writer),
         .s_axis_tuser        (s_axis_tuser),
         .s_axis_tlast        (s_axis_tlast),
-        .s_axis_tready       (s_axis_tready),
+        .s_axis_tready       (rgb_writer_tready),
         .m_axi_awaddr        (m0_axi_awaddr),
         .m_axi_awlen         (m0_axi_awlen),
         .m_axi_awsize        (m0_axi_awsize),
@@ -169,12 +182,6 @@ module road_sign_detector_top #(
         .m_axi_bready        (m0_axi_bready)
     );
 
-    // ==========================================
-    // Stream Synchronization (Backpressure Fix)
-    // ==========================================
-    logic sys_axis_tvalid;
-    assign sys_axis_tvalid = s_axis_tvalid & s_axis_tready;
-
     red_mask_datapath #(
         .TDATA_W(AXIS_TDATA_W)
     ) u_red_mask (
@@ -183,15 +190,13 @@ module road_sign_detector_top #(
         .min_red_val         (cfg_min_red_val),
         .margin_shift        (cfg_margin_shift),
         .s_axis_tdata        (s_axis_tdata),
-        
-        // Feed the masked VALID here instead of raw s_axis_tvalid
-        .s_axis_tvalid       (sys_axis_tvalid), 
-        
-        .s_axis_tready       (),
+        .s_axis_tvalid       (valid_to_red_mask), 
+        .s_axis_tready       (red_mask_tready),
         .s_axis_tuser        (s_axis_tuser),
         .s_axis_tlast        (s_axis_tlast),
         .m_axis_tdata        (stream_mask_tdata),
         .m_axis_tvalid       (stream_mask_tvalid),
+        .m_axis_tready       (morph_tready_in), 
         .m_axis_tuser        (stream_mask_tuser),
         .m_axis_tlast        (stream_mask_tlast)
     );
@@ -205,12 +210,12 @@ module road_sign_detector_top #(
         .rst_n         (rst_n),
         .s_axis_tdata  (stream_mask_tdata),
         .s_axis_tvalid (stream_mask_tvalid),
-        .s_axis_tready (),                   // Added explicitly empty connection
+        .s_axis_tready (morph_tready_in), 
         .s_axis_tuser  (stream_mask_tuser),
         .s_axis_tlast  (stream_mask_tlast),
         .m_axis_tdata  (stream_morph_tdata),
         .m_axis_tvalid (stream_morph_tvalid),
-        .m_axis_tready (1'b1),               // Added downstream ready
+        .m_axis_tready (1'b1),
         .m_axis_tuser  (stream_morph_tuser),
         .m_axis_tlast  (stream_morph_tlast)
     );

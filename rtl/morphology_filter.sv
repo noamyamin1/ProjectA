@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module morphology_filter #(
     parameter int IMG_WIDTH = 1920,
     parameter int IMG_HEIGHT = 1080
@@ -27,19 +29,26 @@ module morphology_filter #(
     logic            dil_last;
     logic            dil_out;
 
+    logic ero_ready_out;
+    logic dil_ready_out;
+
+    assign s_axis_tready = dil_ready_out; // Connect to top input
+
     sliding_window_3x3 #(
         .IMG_WIDTH(IMG_WIDTH)
     ) u_dil_window (
-        .clk     (clk),
-        .rst_n   (rst_n),
-        .s_valid (s_axis_tvalid),
-        .s_data  (s_axis_tdata),
-        .s_user  (s_axis_tuser),
-        .s_last  (s_axis_tlast),
-        .m_valid (dil_valid),
-        .window  (dil_window),
-        .m_user  (dil_user),
-        .m_last  (dil_last)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .s_valid   (s_axis_tvalid),
+        .s_data    (s_axis_tdata),
+        .s_user    (s_axis_tuser),
+        .s_last    (s_axis_tlast),
+        .ready_in  (ero_ready_out),  // Feed back from erosion
+        .m_valid   (dil_valid),
+        .window    (dil_window),
+        .m_user    (dil_user),
+        .m_last    (dil_last),
+        .ready_out (dil_ready_out)   // Feed to upstream
     );
 
     assign dil_out = dil_window[0][0] | dil_window[0][1] | dil_window[0][2] |
@@ -58,16 +67,18 @@ module morphology_filter #(
     sliding_window_3x3 #(
         .IMG_WIDTH(IMG_WIDTH)
     ) u_ero_window (
-        .clk     (clk),
-        .rst_n   (rst_n),
-        .s_valid (dil_valid),
-        .s_data  (dil_out),
-        .s_user  (dil_user),
-        .s_last  (dil_last),
-        .m_valid (ero_valid),
-        .window  (ero_window),
-        .m_user  (ero_user),
-        .m_last  (ero_last)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .s_valid   (dil_valid),
+        .s_data    (dil_out),
+        .s_user    (dil_user),
+        .s_last    (dil_last),
+        .ready_in  (m_axis_tready),  // Feed back from downstream (CCL)
+        .m_valid   (ero_valid),
+        .window    (ero_window),
+        .m_user    (ero_user),
+        .m_last    (ero_last),
+        .ready_out (ero_ready_out)   // Feed to Dilation
     );
 
     assign ero_out = ero_window[0][0] & ero_window[0][1] & ero_window[0][2] &

@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module sliding_window_3x3 #(
     parameter int IMG_WIDTH = 1920
 )(
@@ -8,11 +10,13 @@ module sliding_window_3x3 #(
     input  logic              s_data,
     input  logic              s_user,
     input  logic              s_last,
+    input  logic              ready_in,
     
     output logic              m_valid,
     output logic [2:0][2:0]   window,
     output logic              m_user,
-    output logic              m_last
+    output logic              m_last,
+    output logic              ready_out
 );
 
     logic line_buf_0 [0:IMG_WIDTH-1];
@@ -28,13 +32,15 @@ module sliding_window_3x3 #(
     
     logic [1:0] line_count;
 
+    assign ready_out = ready_in;
+
     // ==========================================
     // Block: ASIC-Safe Line Counter 
     // ==========================================
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             line_count <= '0;
-        end else if (s_valid) begin
+        end else if (ready_in && s_valid) begin
             if (s_user) begin
                 line_count <= '0;
             end else if (wr_ptr == IMG_WIDTH - 1) begin
@@ -57,7 +63,7 @@ module sliding_window_3x3 #(
     // Block 1: Line Buffer Write Logic (BRAM Inference)
     // ==========================================
     always_ff @(posedge clk) begin
-        if (s_valid) begin
+        if (ready_in && s_valid) begin
             line_buf_0[wr_ptr] <= s_data;
             line_buf_1[wr_ptr] <= rdata_0;
             
@@ -67,12 +73,12 @@ module sliding_window_3x3 #(
     end
 
     // ==========================================
-    // Block 2: Write Pointer Counter (Updated)
+    // Block 2: Write Pointer Counter
     // ==========================================
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             wr_ptr <= '0;
-        end else if (s_valid) begin
+        end else if (ready_in && s_valid) begin
             if (s_user || wr_ptr == IMG_WIDTH - 1)
                 wr_ptr <= '0;
             else
@@ -80,29 +86,26 @@ module sliding_window_3x3 #(
         end
     end
 
-    logic [1:0] valid_sr;
-    logic [1:0] user_sr;
-    logic [1:0] last_sr;
-
     // ==========================================
     // Block 3: Shift Registers & Window Formation
     // ==========================================
+    // Changed from array to a single 1-bit register to match window latency
+    logic valid_q;
+    logic user_q;
+    logic last_q;
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            window   <= '0;
-            valid_sr <= '0;
-            user_sr  <= '0;
-            last_sr  <= '0;
-        end else begin
-            // Shift pipeline uniformly (insert bubbles if !s_valid)
-            valid_sr[0] <= s_valid;
-            valid_sr[1] <= valid_sr[0];
+            window  <= '0;
+            valid_q <= 1'b0;
+            user_q  <= 1'b0;
+            last_q  <= 1'b0;
+        end else if (ready_in) begin
             
-            last_sr[0]  <= s_valid ? s_last : 1'b0;
-            last_sr[1]  <= last_sr[0];
-            
-            user_sr[0]  <= s_valid ? s_user : 1'b0;
-            user_sr[1]  <= user_sr[0];
+            // Sync valid, user, and last signals precisely with the 1-cycle data update
+            valid_q <= s_valid;
+            user_q  <= s_valid ? s_user : 1'b0;
+            last_q  <= s_valid ? s_last : 1'b0;
 
             if (s_valid) begin
                 window[0][0] <= s_data;
@@ -120,8 +123,8 @@ module sliding_window_3x3 #(
         end
     end
 
-    assign m_valid = valid_sr[1];
-    assign m_user  = user_sr[1];
-    assign m_last  = last_sr[1];
+    assign m_valid = valid_q;
+    assign m_user  = user_q;
+    assign m_last  = last_q;
 
 endmodule

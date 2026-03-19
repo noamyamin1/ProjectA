@@ -116,14 +116,6 @@ module roi_fetcher_axi_master #(
         end
     end
 
-    always @(posedge clk) begin
-    if (state != next_state) 
-        $display("[%0t] FETCHER STATE CHANGE: %s -> %s | x_dst: %0d, y_dst: %0d", 
-                 $time, state.name(), next_state.name(), x_dst_cnt, y_dst_cnt);
-    
-    if (m_axi_arvalid && m_axi_arready)
-        $display("[%0t] FETCHER AXI REQ: Addr=%h", $time, m_axi_araddr);
-end
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -148,24 +140,58 @@ end
     logic [7:0] r_chan, g_chan, b_chan;
     logic [15:0] gray_val;
 
-    assign r_chan = m_axi_rdata[23:16];
-    assign g_chan = m_axi_rdata[15:8];
-    assign b_chan = m_axi_rdata[7:0];
+    logic word_sel_q;
+    
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            word_sel_q <= 1'b0;
+        end else if (state == ST_AR_REQ && m_axi_arready) begin
+            // Bit 2 determines if the pixel is in the lower or upper 32 bits of the 64-bit bus
+            word_sel_q <= m_axi_araddr[2];
+        end
+    end
+
+    logic [31:0] actual_pixel;
+    assign actual_pixel = word_sel_q ? m_axi_rdata[63:32] : m_axi_rdata[31:0];
+
+    assign r_chan = actual_pixel[23:16];
+    assign g_chan = actual_pixel[15:8];
+    assign b_chan = actual_pixel[7:0];
     
     assign gray_val = (8'd77 * r_chan + 8'd150 * g_chan + 8'd29 * b_chan) >> 8;
 
+   // ==========================================
+    // Synchronized Stream Logic
+    // ==========================================
+    logic [7:0]  data_pipe;
+    logic        valid_pipe;
+    logic        last_pipe;
+
+    // We detect the last pixel condition one cycle ahead of the actual output
+    logic is_last_pixel;
+    assign is_last_pixel = (x_dst_cnt == 7'd63 && y_dst_cnt == 7'd63);
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            m_axis_gray_tdata  <= '0;
-            m_axis_gray_tlast  <= 1'b0;
+            valid_pipe <= 1'b0;
+            last_pipe  <= 1'b0;
+            data_pipe  <= 8'd0;
         end else begin
+            // Shift the control signals to match the data latency
             if (state == ST_R_WAIT && m_axi_rvalid) begin
-                m_axis_gray_tdata <= gray_val[7:0];
-                m_axis_gray_tlast <= (x_dst_cnt == 7'd63 && y_dst_cnt == 7'd63);
+                valid_pipe <= 1'b1;
+                data_pipe  <= gray_val[7:0];
+                last_pipe  <= is_last_pixel;
+            end else begin
+                valid_pipe <= 1'b0;
+                last_pipe  <= 1'b0;
             end
         end
     end
-    assign m_axis_gray_tvalid = (state == ST_R_WAIT && m_axi_rvalid);
+
+    assign m_axis_gray_tvalid = valid_pipe;
+    assign m_axis_gray_tdata  = data_pipe;
+    assign m_axis_gray_tlast  = last_pipe;
     assign fetch_done = (state == ST_DONE);
 
 endmodule

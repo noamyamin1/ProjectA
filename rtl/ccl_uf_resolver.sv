@@ -16,6 +16,23 @@ module ccl_uf_resolver #(
 );
 
     // ==========================================
+    // SCOPE NOTE: Union-Find Resolution
+    // ==========================================
+    // This resolver ONLY modifies the parent RAM (union-find data structure).
+    // It does NOT stream resolved pixel labels to output.
+    // 
+    // The resolved labels are computed during CCL Pass 2:
+    // - Pass 1: Stream pixel labels, build parent table (union-find)
+    // - UF Resolver (this module): Compress parent pointers to roots
+    // - Pass 2: Re-stream Pass 1 labels, apply parent[label] lookups
+    //
+    // To get the final resolved labels, the CCL Pass 2 stage must:
+    //   1. Re-read Pass 1 labels from DDR
+    //   2. For each label L: look up parent[L] to get resolved_label
+    //   3. Output resolved_label
+    //
+
+    // ==========================================
     // FSM States
     // ==========================================
     typedef enum logic [2:0] {

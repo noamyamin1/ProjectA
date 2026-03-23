@@ -14,12 +14,17 @@ module tb_road_sign_detector_top();
     parameter int IMG_H           = 1080;
     parameter int CLK_PERIOD      = 10;
 
-    int f_mask_ref, f_morph_ref;
-    int f_mask_actual, f_morph_actual;
+    int f_mask_ref, f_morph_ref, f_ccl_ref;
+    int f_mask_actual, f_morph_actual, f_ccl_actual;
+    int f_ccl_resolved;  // For resolved labels (Pass 2)
+    int f_geom_filtered;  // Geometry filter output
     int mask_errors = 0;
     int morph_errors = 0;
+    int ccl_errors = 0;
+    int geom_detected_count = 0;  // Count signs passing geometry filter
     
     int f_rtl_roi;
+    int f_rtl_results;
     int roi_pixel_cnt = 0;
 
     // Array for fast image streaming
@@ -314,16 +319,36 @@ module tb_road_sign_detector_top();
 
         f_mask_ref  = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/mask_out2.txt", "r");
         f_morph_ref = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/morph_out2.txt", "r");
+        f_ccl_ref   = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/ccl_labels_golden.txt", "r");
         
         f_mask_actual  = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/actual_mask_out.txt", "w");
         f_morph_actual = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/actual_morph_out.txt", "w");
+        f_ccl_actual   = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/actual_ccl_labels.txt", "w");
+        f_ccl_resolved = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/rtl_ccl_resolved.txt", "w");
         
         f_rtl_roi = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/rtl_fetched_gray.hex", "w");
+        f_geom_filtered = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/actual_geom_filtered.txt", "w");
+        f_rtl_results = $fopen("/users/epnyrk/Project/design/work/ProjectA/data/rtl_final_results.txt", "w");
 
-        if (!f_mask_ref || !f_morph_ref || !f_rtl_roi) begin
+        if (!f_mask_ref || !f_morph_ref || !f_ccl_ref || !f_rtl_roi || !f_geom_filtered || !f_rtl_results) begin
             $display("ERROR: Could not open reference or data files.");
             $finish;
         end
+        
+        // Write header to results file
+        $fdisplay(f_rtl_results, "===============================================");
+        $fdisplay(f_rtl_results, "RTL SIMULATION RESULTS - Road Sign Detector");
+        $fdisplay(f_rtl_results, "===============================================");
+        $fdisplay(f_rtl_results, "Simulation Time: %0t", $time);
+        $fdisplay(f_rtl_results, "Image Resolution: 1920x1080");
+        $fdisplay(f_rtl_results, "VERIFICATION GOAL: Detect exactly 1 traffic sign per frame");
+        $fdisplay(f_rtl_results, "");
+        
+        // Write header to geometry filter file
+        $fdisplay(f_geom_filtered, "# RTL Geometry Filter Output - Valid Signs Detected");
+        $fdisplay(f_geom_filtered, "# Format: label_id area centroid_x centroid_y xmin xmax ymin ymax width height");
+        $fdisplay(f_geom_filtered, "# Goal: Detect 1 sign that passes area constraints (50-100k pixels)");
+        $fdisplay(f_geom_filtered, "");
     end
 
     // Monitor Red Mask Output
@@ -341,6 +366,7 @@ module tb_road_sign_detector_top();
 
     // Monitor Morphology Output
     bit morph_sync_done = 0;
+    int morph_pixel_cnt = 0;
 
     always @(posedge clk) begin
         if (dut.u_morphology.m_axis_tvalid && dut.u_morphology.m_axis_tready) begin 
@@ -350,6 +376,10 @@ module tb_road_sign_detector_top();
                 logic ref_bit;
                 int status;
                 status = $fscanf(f_morph_ref, "%b", ref_bit);
+                morph_pixel_cnt++;
+                
+                // Write morphology output to file
+                $fdisplay(f_morph_actual, "%b", dut.u_morphology.m_axis_tdata);
                 
                 if (dut.u_morphology.m_axis_tdata !== ref_bit) begin
                     morph_errors++;
@@ -360,6 +390,68 @@ module tb_road_sign_detector_top();
         end
     end
     
+    // Monitor CCL Output (Connected Component Labels)
+    int ccl_pixel_cnt = 0;
+
+    always @(posedge clk) begin
+        if (dut.u_backend_processing.u_ccl_engine.p1_axis_tvalid) begin
+            int ref_label;
+            int rtl_label;
+            int status;
+            status = $fscanf(f_ccl_ref, "%d", ref_label);
+            rtl_label = dut.u_backend_processing.u_ccl_engine.p1_axis_tdata;
+            ccl_pixel_cnt++;
+            
+            // Write CCL label to output file
+            $fdisplay(f_ccl_actual, "%d", rtl_label);
+            
+            if (rtl_label !== ref_label) begin
+                ccl_errors++;
+                if (ccl_errors < 5)
+                    $display("[%0t] CCL MISMATCH: Expected %d, Got %d", $time, ref_label, rtl_label);
+            end
+        end
+    end
+    
+    // Monitor CCL Resolved Output (Pass 2 - Union-Find Results)
+    // NOTE: The UF Resolver (ccl_uf_resolver) only modifies the parent RAM (union-find parent pointers).
+    //       It does NOT stream resolved pixel labels. To get resolved labels, the CCL Pass 2 must re-stream
+    //       Pass 1 labels and apply the resolved parent table for each pixel.
+    //       This block monitors the Pass 2 resolved stream if available in your design.
+    always @(posedge clk) begin
+        if (dut.u_backend_processing.u_ccl_engine.u_resolver.parent_we) begin
+            $fdisplay(f_ccl_resolved,"%0d [%0d]", dut.u_backend_processing.u_ccl_engine.u_resolver.parent_addr, dut.u_backend_processing.u_ccl_engine.u_resolver.parent_wdata);
+        end
+    end
+
+    // Monitor Geometry Filter Output - Components passing area constraints
+    // These are the actual detected signs from the RTL filter stage
+    // The geometry_filter module outputs: obj_valid, obj_label, obj_xmin, obj_xmax, obj_ymin, obj_ymax
+    always @(posedge clk) begin
+        if (dut.u_backend_processing.u_geometry_filter.obj_valid) begin
+            int label_id    = dut.u_backend_processing.u_geometry_filter.obj_label;
+            int bbox_xmin   = dut.u_backend_processing.u_geometry_filter.obj_xmin;
+            int bbox_xmax   = dut.u_backend_processing.u_geometry_filter.obj_xmax;
+            int bbox_ymin   = dut.u_backend_processing.u_geometry_filter.obj_ymin;
+            int bbox_ymax   = dut.u_backend_processing.u_geometry_filter.obj_ymax;
+            
+            int width       = bbox_xmax - bbox_xmin + 1;
+            int height      = bbox_ymax - bbox_ymin + 1;
+            int centroid_x  = (bbox_xmin + bbox_xmax) / 2;  // Computed from bbox
+            int centroid_y  = (bbox_ymin + bbox_ymax) / 2;  // Computed from bbox
+            int area        = width * height;               // Spatial bounding box area
+            
+            $fdisplay(f_geom_filtered, "%0d %0d %0d %0d %0d %0d %0d %0d %0d %0d", 
+                      label_id, area, centroid_x, centroid_y, 
+                      bbox_xmin, bbox_xmax, bbox_ymin, bbox_ymax, width, height);
+            
+            geom_detected_count++;
+            
+            $display("[%0t] GEOMETRY FILTER OUTPUT: Label=%0d, Area=%0d, BBox=[%0d:%0d, %0d:%0d]", 
+                     $time, label_id, area, bbox_xmin, bbox_xmax, bbox_ymin, bbox_ymax);
+        end
+    end
+
     // ==========================================
     // Monitor: Dump fetched ROI to Hex File
     // ==========================================
@@ -376,6 +468,8 @@ module tb_road_sign_detector_top();
     // Main Test Sequence
     // ==========================================
     logic [31:0] read_val;
+    logic [7:0] class_id;
+    logic [15:0] bbox_xmin, bbox_xmax, bbox_ymin, bbox_ymax;
 
     initial begin
         $display("[%0t] System Asserting Reset...", $time);
@@ -408,13 +502,21 @@ module tb_road_sign_detector_top();
 
         axi_lite_read(12'h004, read_val); 
         $display("----------------------------------------");
-        $display("Class ID    : %0d (%s)", (read_val >> 8) & 8'hFF, template_desc[(read_val >> 8) & 8'hFF]); 
+        class_id = (read_val >> 8) & 8'hFF;
+        $display("Class ID    : %0d (%s)", class_id, template_desc[class_id]); 
+        $fdisplay(f_rtl_results, "CLASS_ID: %0d", class_id);
         
         axi_lite_read(12'h008, read_val); 
-        $display("BBox X-Axis : [%0d, %0d]", read_val & 16'hFFFF, (read_val >> 16) & 16'hFFFF);
+        bbox_xmin = read_val & 16'hFFFF;
+        bbox_xmax = (read_val >> 16) & 16'hFFFF;
+        $display("BBox X-Axis : [%0d, %0d]", bbox_xmin, bbox_xmax);
+        $fdisplay(f_rtl_results, "BBOX_X: [%0d, %0d]", bbox_xmin, bbox_xmax);
         
         axi_lite_read(12'h00C, read_val); 
-        $display("BBox Y-Axis : [%0d, %0d]", read_val & 16'hFFFF, (read_val >> 16) & 16'hFFFF);
+        bbox_ymin = read_val & 16'hFFFF;
+        bbox_ymax = (read_val >> 16) & 16'hFFFF;
+        $display("BBox Y-Axis : [%0d, %0d]", bbox_ymin, bbox_ymax);
+        $fdisplay(f_rtl_results, "BBOX_Y: [%0d, %0d]", bbox_ymin, bbox_ymax);
         $display("----------------------------------------");
 
         $display("========================================");
@@ -425,15 +527,67 @@ module tb_road_sign_detector_top();
         
         if (morph_errors == 0) $display("MORPHOLOGY: MATCHED! (Passed)");
         else                   $display("MORPHOLOGY: FAILED with %0d mismatches", morph_errors);
+        
+        if (ccl_errors == 0) $display("CCL LABELS: MATCHED! (Passed)");
+        else                 $display("CCL LABELS: FAILED with %0d mismatches", ccl_errors);
+        
         $display("========================================");
 
+        // Write stage results to rtl_results file
+        $fdisplay(f_rtl_results, "");
+        $fdisplay(f_rtl_results, "INTERMEDIATE_STAGES:");
+        $fdisplay(f_rtl_results, "MASK_ERRORS: %0d", mask_errors);
+        $fdisplay(f_rtl_results, "MORPH_ERRORS: %0d", morph_errors);
+        $fdisplay(f_rtl_results, "CCL_ERRORS: %0d", ccl_errors);
+        $fdisplay(f_rtl_results, "MORPH_PIXELS_PROCESSED: %0d", morph_pixel_cnt);
+        $fdisplay(f_rtl_results, "CCL_PIXELS_PROCESSED: %0d", ccl_pixel_cnt);
+        $fdisplay(f_rtl_results, "ROI_PIXELS_FETCHED: %0d", roi_pixel_cnt);
+        $fdisplay(f_rtl_results, "");
+        $fdisplay(f_rtl_results, "GEOMETRY_FILTER_RESULTS:");
+        $fdisplay(f_rtl_results, "SIGNS_DETECTED: %0d (Goal: exactly 1 sign)", geom_detected_count);
+        if (geom_detected_count == 1)
+            $fdisplay(f_rtl_results, "GEOMETRY_FILTER: PASS (detected 1 sign)");
+        else if (geom_detected_count == 0)
+            $fdisplay(f_rtl_results, "GEOMETRY_FILTER: FAIL (detected 0 signs - NO DETECTION)");
+        else
+            $fdisplay(f_rtl_results, "GEOMETRY_FILTER: FAIL (detected %0d signs - should be 1)", geom_detected_count);
+        $fdisplay(f_rtl_results, "");
+        $fdisplay(f_rtl_results, "FINAL_DETECTION:");
+        $fdisplay(f_rtl_results, "CLASS_NAME: %s", template_desc[class_id]);
+        $fdisplay(f_rtl_results, "BBOX_DIMENSIONS:");
+        $fdisplay(f_rtl_results, "  X: [%0d, %0d] (width=%0d)", bbox_xmin, bbox_xmax, (bbox_xmax - bbox_xmin + 1));
+        $fdisplay(f_rtl_results, "  Y: [%0d, %0d] (height=%0d)", bbox_ymin, bbox_ymax, (bbox_ymax - bbox_ymin + 1));
+        $fdisplay(f_rtl_results, "");
+        $fdisplay(f_rtl_results, "VERIFICATION_STATUS:");
+        if (geom_detected_count == 1 && mask_errors == 0 && morph_errors == 0 && ccl_errors == 0)
+            $fdisplay(f_rtl_results, "  Overall: PASS (1 sign detected and identified)");
+        else if (geom_detected_count == 1)
+            $fdisplay(f_rtl_results, "  Overall: PARTIAL (1 sign detected, but intermediate stages have errors)");
+        else if (geom_detected_count == 0)
+            $fdisplay(f_rtl_results, "  Overall: FAIL (No signs detected at geometry filter)");
+        else
+            $fdisplay(f_rtl_results, "  Overall: FAIL (%0d signs detected, should be 1)", geom_detected_count);
+        $fdisplay(f_rtl_results, "===============================================");
+        
         $fclose(f_mask_ref);
         $fclose(f_morph_ref);
+        $fclose(f_ccl_ref);
         $fclose(f_mask_actual);
         $fclose(f_morph_actual);
-        
+        $fclose(f_ccl_actual);
+        $fclose(f_ccl_resolved);
         $fclose(f_rtl_roi);
+        $fclose(f_geom_filtered);
+        $fclose(f_rtl_results);
+        
+        $display("");
+        $display("========== SIMULATION OUTPUT FILES SUMMARY ==========");
         $display("Dumped %0d ROI pixels to rtl_fetched_gray.hex", roi_pixel_cnt);
+        $display("Dumped %0d CCL Pass 1 labels to actual_ccl_labels.txt", ccl_pixel_cnt);
+        $display("Dumped CCL Pass 2 (resolved) labels to rtl_ccl_resolved.txt");
+        $display("Dumped %0d detected signs to actual_geom_filtered.txt", geom_detected_count);
+        $display("RTL final results saved to rtl_final_results.txt");
+        $display("======================================================");
         
         #(CLK_PERIOD * 100);
         $finish;

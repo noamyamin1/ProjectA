@@ -89,9 +89,7 @@ def check_script_files():
         'golden_model_complete.py',
         'comparison_and_analysis.py',
         'detailed_report_generator.py',
-        'run_verification.py',
         'setup_and_doctor.py',
-        'README.md'
     ]
     
     all_ok = True

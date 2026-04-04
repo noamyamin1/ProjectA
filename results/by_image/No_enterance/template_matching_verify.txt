@@ -1,0 +1,12 @@
+STAGE: TEMPLATE_MATCHING
+GOLDEN_ROIS: 1
+ACTUAL_ROIS: 1
+CLASS_MISMATCHES: 1
+SCORE_MISMATCHES: 1
+STATUS: FAIL
+
+Class mismatches (roi_id golden actual):
+0 4 16
+
+Score mismatches (roi_id golden actual):
+0 239 250

@@ -1,0 +1,56 @@
+STAGE: CCL_STATS
+GOLDEN_LABELS: 139
+RTL_LABELS: 139
+MISSING_LABELS_IN_RTL: 0
+EXTRA_LABELS_IN_RTL: 0
+FIELD_MISMATCHES: 47
+STATUS: FAIL
+
+Field mismatches (label field golden rtl):
+58 area 691 679
+58 perimeter 130 126
+58 xmax 1919 1918
+69 area 20 30
+69 perimeter 20 30
+69 xmax 1 4095
+86 area 4 6
+86 perimeter 4 6
+86 xmax 1 4095
+137 area 216 214
+137 perimeter 108 106
+151 area 11 13
+151 perimeter 11 13
+151 xmin 782 781
+162 area 54 51
+162 perimeter 36 37
+162 xmax 1919 4095
+185 area 1 2
+185 perimeter 1 2
+185 xmax 0 4095
+198 area 5 7
+198 perimeter 5 7
+198 xmax 1 4095
+338 area 594 414
+338 perimeter 188 96
+338 ymax 1079 1077
+343 area 29 20
+343 perimeter 16 10
+343 ymax 1079 1077
+344 area 1061 707
+344 perimeter 361 182
+344 ymax 1079 1077
+345 area 3366 2244
+345 perimeter 1130 567
+345 ymax 1079 1077
+346 area 192 128
+346 perimeter 72 38
+346 ymax 1079 1077
+347 area 852 568
+347 perimeter 292 148
+347 ymax 1079 1077
+348 area 936 624
+348 perimeter 320 162
+348 ymax 1079 1077
+349 area 797 531
+349 perimeter 273 138
+349 ymax 1079 1077

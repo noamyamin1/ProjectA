@@ -1,0 +1,34 @@
+1 - no sign
+2 - no sign
+3 - no sign
+4 - right intersection
+5 - no sign
+6 - 70 vel
+7 - no right turn
+8 - no sign (do not try validating this img)
+9 - no sign (do not try validating this img)
+10 - no sign (do not try validating yhis img)
+11 - 100 vel
+12 - no sign
+13 - no sign
+14 - left turn
+15 - left intersection
+16 - 100 vel
+17 - 70 vel
+18 - 50 vel
+19 - no sign
+20 - urban area
+21 - urban area
+22 - road works
+23 - road works
+24 - road works
+25 - 60 vel
+26 - 60 vel
+27 - urban area or 60 vel
+bumpers - bumper (do not try validating this img)
+down_triangle - no sign (do not try validating this img)
+No_entrance - no sign (do not try validating this img)
+slippery_road - slippery 2
+slippery_road_redcar - slippery 2
+
+

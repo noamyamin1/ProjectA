@@ -5,10 +5,12 @@ module ccl_stats_collector #(
     parameter int COORD_W = 12,
     parameter int MAX_COORD = 4095,
     parameter int IMG_WIDTH = 2872,
-    parameter int IMG_HEIGHT = 1617
+    parameter int IMG_HEIGHT = 1617,
+    parameter bit USE_RESOLVED_LABELS = 1'b0
 )(
     input  logic               clk,
     input  logic               rst_n,
+    input  logic               clear,
 
     input  logic [LABEL_W-1:0] s_axis_label,
     input  logic               s_axis_tvalid,
@@ -26,7 +28,8 @@ module ccl_stats_collector #(
     output logic [15:0]        out_ymin,
     output logic [15:0]        out_ymax,
 
-    output logic               stats_done
+    output logic               stats_done,
+    output logic               init_done
 );
 
     typedef enum logic [1:0] {
@@ -44,6 +47,9 @@ module ccl_stats_collector #(
         if (!rst_n) begin
             state     <= ST_INIT;
             init_addr <= '0;
+        end else if (clear) begin
+            state     <= ST_INIT;
+            init_addr <= '0;
         end else begin
             case (state)
                 ST_INIT: begin
@@ -51,11 +57,10 @@ module ccl_stats_collector #(
                     else                              init_addr <= init_addr + 1;
                 end
                 ST_PROCESS: begin
-                    if (s_axis_tvalid && s_axis_tuser) state <= ST_INIT;
-                    else if (stats_done_pulse)         state <= ST_DONE;
+                    if (stats_done_pulse)         state <= ST_DONE;
                 end
                 ST_DONE: begin
-                    if (s_axis_tvalid && s_axis_tuser) state <= ST_INIT;
+                    state <= ST_DONE;
                 end
             endcase
         end
@@ -75,7 +80,7 @@ module ccl_stats_collector #(
     logic [COORD_W-1:0] x_cnt, y_cnt;
 
     always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+        if (!rst_n || clear) begin
             wr_ptr <= '0;
             rd_ptr <= '0;
             x_cnt  <= '0;
@@ -120,6 +125,7 @@ module ccl_stats_collector #(
 
     assign stats_done_pulse = (y_cnt == IMG_HEIGHT - 1) && s_axis_tlast && s_axis_tvalid;
     assign stats_done = (state == ST_DONE);
+    assign init_done  = (state != ST_INIT);
 
     // Edge Detection
     logic is_edge;
@@ -139,17 +145,25 @@ module ccl_stats_collector #(
     end
 
     // RMW Pipeline
-    logic               stg1_valid, stg2_valid, stg3_valid;
-    logic [COORD_W-1:0] stg1_x, stg1_y, stg2_x, stg2_y, stg3_x, stg3_y;
-    logic [LABEL_W-1:0] stg1_label, stg2_root, stg3_root;
-    logic               stg1_edge, stg2_edge, stg3_edge;
+    logic               stg1_valid, stg1_valid_d1, stg2_valid, stg3_valid;
+    logic [COORD_W-1:0] stg1_x, stg1_y, stg1_x_d1, stg1_y_d1, stg2_x, stg2_y, stg3_x, stg3_y;
+    logic [LABEL_W-1:0] stg1_label, stg1_label_d1, stg2_root, stg3_root;
+    logic               stg1_edge, stg1_edge_d1, stg2_edge, stg3_edge;
 
     always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            stg1_valid <= 1'b0; stg2_valid <= 1'b0; stg3_valid <= 1'b0;
+        if (!rst_n || clear) begin
+            stg1_valid <= 1'b0;
+            stg1_valid_d1 <= 1'b0;
+            stg2_valid <= 1'b0;
+            stg3_valid <= 1'b0;
+            stg1_x_d1 <= '0;
+            stg1_y_d1 <= '0;
+            stg1_label_d1 <= '0;
+            stg1_edge_d1 <= 1'b0;
         end else begin
             stg1_valid <= valid_pixel;
-            stg2_valid <= stg1_valid;
+            stg1_valid_d1 <= stg1_valid;
+            stg2_valid <= stg1_valid_d1;
             stg3_valid <= stg2_valid;
             
             if (valid_pixel) begin
@@ -159,8 +173,13 @@ module ccl_stats_collector #(
                 stg1_edge  <= is_edge;
             end
             if (stg1_valid) begin
-                stg2_x <= stg1_x; stg2_y <= stg1_y;
-                stg2_edge <= stg1_edge;
+                stg1_x_d1 <= stg1_x; stg1_y_d1 <= stg1_y;
+                stg1_edge_d1 <= stg1_edge;
+                stg1_label_d1 <= stg1_label;
+            end
+            if (stg1_valid_d1) begin
+                stg2_x <= stg1_x_d1; stg2_y <= stg1_y_d1;
+                stg2_edge <= stg1_edge_d1;
             end
             if (stg2_valid) begin
                 stg3_x <= stg2_x; stg3_y <= stg2_y;
@@ -170,8 +189,8 @@ module ccl_stats_collector #(
         end
     end
 
-    assign parent_addr = stg1_label;
-    assign stg2_root   = parent_rdata;
+    assign parent_addr = stg1_label_d1;
+    assign stg2_root   = USE_RESOLVED_LABELS ? stg1_label_d1 : parent_rdata;
 
     // RAMs Definition
     logic [31:0] area_ram  [0:(1<<LABEL_W)-1];
@@ -220,7 +239,7 @@ module ccl_stats_collector #(
     logic [15:0]        stg4_xmin, stg4_xmax, stg4_ymin, stg4_ymax;
 
     always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+        if (!rst_n || clear) begin
             stg4_valid <= 1'b0;
         end else begin
             stg4_valid <= stg3_valid;

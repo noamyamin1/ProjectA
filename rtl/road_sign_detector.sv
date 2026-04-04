@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module road_sign_detector_top #(
+module road_sign_detector #(
     parameter int AXI_LITE_ADDR_W = 12,
     parameter int AXI_LITE_DATA_W = 32,
     parameter int AXIS_TDATA_W    = 24,
@@ -77,7 +77,8 @@ module road_sign_detector_top #(
     input  logic                       m1_axi_rvalid,
     output logic                       m1_axi_rready,
 
-    output logic                       irq
+    output logic                       irq,
+    output logic [7:0]                 current_id
 );
 
     logic [7:0]  cfg_min_red_val;
@@ -102,6 +103,21 @@ module road_sign_detector_top #(
     logic        stream_morph_tuser;
     logic        stream_morph_tlast;
 
+    logic        rgb_frame_written;
+
+    // New logic for current_id output
+    logic [7:0]  current_id_reg;
+    logic [7:0]  last_valid_id_reg;
+    assign current_id = current_id_reg;
+    // Optionally expose last_valid_id_reg as a port if needed
+
+    // These signals must be provided by backend_processing_unit:
+    // - detected_id: the class ID of the detected sign for this frame
+    // - bbox_valid: 1 if a bbox passed the geom filter for this frame, 0 otherwise
+    // For now, we will wire them out from backend_processing_unit (see below)
+    wire [7:0] detected_id;
+    wire       bbox_valid;
+
     // ==========================================
     // AXI-Stream Broadcaster (Fork) Logic
     // ==========================================
@@ -109,13 +125,33 @@ module road_sign_detector_top #(
     logic red_mask_tready;
     logic morph_tready_in;
 
-    assign s_axis_tready = rgb_writer_tready & red_mask_tready;
+    logic frame_active;
+    logic accept_stream;
+
+    assign accept_stream = cfg_enable && (frame_active ? !s_axis_tuser : s_axis_tuser);
+    assign s_axis_tready = rgb_writer_tready & red_mask_tready & accept_stream;
 
     logic valid_to_writer;
     logic valid_to_red_mask;
 
-    assign valid_to_writer   = s_axis_tvalid & red_mask_tready;
-    assign valid_to_red_mask = s_axis_tvalid & rgb_writer_tready;
+    assign valid_to_writer   = s_axis_tvalid & red_mask_tready & accept_stream;
+    assign valid_to_red_mask = s_axis_tvalid & rgb_writer_tready & accept_stream;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            frame_active <= 1'b0;
+        end else if (!cfg_enable) begin
+            frame_active <= 1'b0;
+        end else begin
+            if (!frame_active) begin
+                if (s_axis_tvalid && s_axis_tready && s_axis_tuser) begin
+                    frame_active <= 1'b1;
+                end
+            end else if (sts_done_flag) begin
+                frame_active <= 1'b0;
+            end
+        end
+    end
 
     csr_unit #(
         .ADDR_W(AXI_LITE_ADDR_W),
@@ -155,7 +191,8 @@ module road_sign_detector_top #(
 
     rgb_frame_writer #(
         .AXI_ADDR_W(AXI_FULL_ADDR_W),
-        .AXI_DATA_W(AXI_FULL_DATA_W)
+        .AXI_DATA_W(AXI_FULL_DATA_W),
+        .IMG_H(IMG_H)
     ) u_rgb_writer (
         .clk                 (clk),
         .rst_n               (rst_n),
@@ -166,6 +203,7 @@ module road_sign_detector_top #(
         .s_axis_tuser        (s_axis_tuser),
         .s_axis_tlast        (s_axis_tlast),
         .s_axis_tready       (rgb_writer_tready),
+        .frame_written       (rgb_frame_written),
         .m_axi_awaddr        (m0_axi_awaddr),
         .m_axi_awlen         (m0_axi_awlen),
         .m_axi_awsize        (m0_axi_awsize),
@@ -230,6 +268,7 @@ module road_sign_detector_top #(
         .rst_n               (rst_n),
         .cfg_enable          (cfg_enable),
         .cfg_frame_base_addr (cfg_frame_base_addr),
+        .frame_written       (rgb_frame_written),
         .s_axis_tdata        (stream_morph_tdata),
         .s_axis_tvalid       (stream_morph_tvalid),
         .s_axis_tuser        (stream_morph_tuser),
@@ -264,7 +303,28 @@ module road_sign_detector_top #(
         .sts_bbox_xmin       (sts_bbox_xmin),
         .sts_bbox_xmax       (sts_bbox_xmax),
         .sts_bbox_ymin       (sts_bbox_ymin),
-        .sts_bbox_ymax       (sts_bbox_ymax)
+
+        .sts_bbox_ymax       (sts_bbox_ymax),
+        .detected_id         (detected_id),
+        .bbox_valid          (bbox_valid)
     );
+
+    // Update current_id at end of each frame
+    // 8'hFF means 'no sign' detected
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            current_id_reg <= 8'hFF;
+            last_valid_id_reg <= 8'h00;
+        end else if (sts_done_flag) begin
+            // Always update current_id_reg to reflect current frame result
+            if (bbox_valid) begin
+                current_id_reg <= detected_id;         // Current frame detected a sign
+                last_valid_id_reg <= detected_id;      // Update last valid detected ID
+            end else begin
+                current_id_reg <= 8'hFF;               // No sign detected in this frame
+                // last_valid_id_reg holds previous value (last valid detection)
+            end
+        end
+    end
 
 endmodule

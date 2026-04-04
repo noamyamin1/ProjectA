@@ -1,19 +1,18 @@
-ID 0 : 10.png - bumper
-ID 1 : 100.jpg - 100 vel
-ID 2 : 11.png - yeald
-ID 3 : 12.png - no entry
-ID 4 : 13.png - T right
-ID 5 : 30.png - 30 vel
-ID 6 : 4.jpg - slippery
-ID 7 : 40.png - 40 vel
-ID 8 : 50.jpg - 50 vel
-ID 9 : 6.png - right intersection
-ID 10 : 60.png - 60 vel
-ID 11 : 7.png - left intersection
-ID 12 : 70.jpg - 70 vel
-ID 13 : 8.png - people
-ID 14 : 9.png - slippery 2
-ID 15 : home.jpg - urban area
-ID 16 : left.png - left turn
-ID 17 : right.png - right turn
-ID 18 : work.jpg - road works
+ID 0 : 100.jpg - 100 vel
+ID 1 : 13.png - T right
+ID 2 : 30.png - 30 vel
+ID 3 : 4.jpg - slippery
+ID 4 : 40.png - 40 vel
+ID 5 : 50.jpg - 50 vel
+ID 6 : 6.png - right intersection
+ID 7 : 60.png - 60 vel
+ID 8 : 7.png - left intersection
+ID 9 : 70.jpg - 70 vel
+ID 10 : 8.png - people
+ID 11 : 9.png - slippery 2
+ID 12 : home.png - urban area
+ID 13 : right.png - right turn
+ID 14 : left.png - left turn
+ID 15 : work.jpg - road works
+ID 16 : 14.png - no right turn
+ID 17 : 100_2.png - 100 vel

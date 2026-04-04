@@ -1,0 +1,2 @@
+# roi_id xmin xmax ymin ymax best_class_id best_score
+0 1555 1687 570 677 11 165

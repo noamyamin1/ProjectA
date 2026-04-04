@@ -12,6 +12,7 @@ module backend_processing_unit #(
 
     input  logic                  cfg_enable,
     input  logic [31:0]           cfg_frame_base_addr,
+    input  logic                  frame_written,
 
     // Input Stream from Morphology
     input  logic                  s_axis_tdata,
@@ -53,8 +54,16 @@ module backend_processing_unit #(
     output logic [15:0]           sts_bbox_xmin,
     output logic [15:0]           sts_bbox_xmax,
     output logic [15:0]           sts_bbox_ymin,
-    output logic [15:0]           sts_bbox_ymax
+    output logic [15:0]           sts_bbox_ymax,
+    output logic [7:0]            detected_id,
+    output logic                  bbox_valid
 );
+    // Detected ID and bbox_valid logic for road_sign_detector
+    logic [7:0] detected_id_reg, next_detected_id;
+    logic       bbox_valid_reg, next_bbox_valid;
+    assign detected_id = detected_id_reg;
+    assign bbox_valid  = bbox_valid_reg;
+
 
     // ==========================================
     // FSM Definitions
@@ -75,8 +84,9 @@ module backend_processing_unit #(
     // ==========================================
     // Inter-Module Signals
     // ==========================================
-    logic pass1_done, resolver_done, stats_done, geo_done, fetch_done, match_done;
+    logic pass1_done, resolver_done, stats_done, stats_init_done, geo_done, fetch_done, match_done;
     logic [LABEL_W-1:0] p2_parent_addr, p2_parent_rdata;
+    logic [LABEL_W-1:0] stats_parent_addr;
     logic [LABEL_W-1:0] geo_ram_addr;
     logic [31:0]        stats_area_rdata, stats_perim_rdata;
     logic [15:0]        stats_xmin_rdata, stats_xmax_rdata, stats_ymin_rdata, stats_ymax_rdata;
@@ -115,6 +125,12 @@ module backend_processing_unit #(
 
     logic [7:0] matcher_best_class_id; // Wire from Matcher
     logic [7:0] latched_best_class_id; // Register for CSR
+    localparam int NO_SIGN_SCORE_THRESHOLD = 230;
+    logic [15:0] stream_row_cnt;
+    logic frame_eof_seen;
+    logic geo_done_seen;
+    logic geo_obj_seen;
+    logic stats_clear;
 
     // ==========================================
     // DMA WRITER: Pack Pass 1 Labels to DDR
@@ -182,6 +198,12 @@ module backend_processing_unit #(
     logic [15:0] p2_stream_tdata;
     logic        p2_stream_tvalid;
     logic        p2_stream_tlast;
+    logic [15:0] p2_label_raw;
+    logic [15:0] p2_label_raw_d1;
+    logic        p2_label_valid;
+    logic        p2_label_last;
+    logic        p2_label_valid_d1;
+    logic        p2_label_last_d1;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -190,22 +212,19 @@ module backend_processing_unit #(
             p2_pixel_cnt     <= '0;
             p2_arvalid       <= 1'b0;
             p2_rready        <= 1'b0;
-            p2_stream_tvalid <= 1'b0;
-            p2_stream_tlast  <= 1'b0;
         end else if (state == ST_IDLE) begin
             p2_rstate        <= R_IDLE;
             p2_addr_cnt      <= cfg_frame_base_addr + 32'h0200_0000;
             p2_pixel_cnt     <= '0;
             p2_arvalid       <= 1'b0;
             p2_rready        <= 1'b0;
-            p2_stream_tvalid <= 1'b0;
-            p2_stream_tlast  <= 1'b0;
         end else if (state == ST_PASS2_STATS) begin
             case (p2_rstate)
                 R_IDLE: begin
-                    p2_stream_tvalid <= 1'b0;
-                    p2_stream_tlast  <= 1'b0;
-                    if (p2_pixel_cnt < (IMG_W * IMG_H) && !p2_arvalid) begin
+                    p2_label_valid   <= 1'b0;
+                    if (!stats_init_done) begin
+                        p2_rstate <= R_IDLE;
+                    end else if (p2_pixel_cnt < (IMG_W * IMG_H) && !p2_arvalid) begin
                         p2_rstate  <= R_REQ;
                         p2_arvalid <= 1'b1;
                         p2_araddr  <= p2_addr_cnt;
@@ -214,7 +233,6 @@ module backend_processing_unit #(
                     end
                 end
                 R_REQ: begin
-                    p2_stream_tvalid <= 1'b0;
                     if (p2_arvalid && p2_arready) begin
                         p2_arvalid <= 1'b0;
                         p2_rready  <= 1'b1;
@@ -222,7 +240,6 @@ module backend_processing_unit #(
                     end
                 end
                 R_WAIT: begin
-                    p2_stream_tvalid <= 1'b0;
                     if (p2_rvalid && p2_rready) begin
                         p2_unpack_data <= p2_rdata;
                         p2_unpack_cnt  <= 2'd0;
@@ -231,9 +248,9 @@ module backend_processing_unit #(
                     end
                 end
                 R_UNPACK: begin
-                    p2_stream_tvalid <= 1'b1;
-                    p2_stream_tdata  <= p2_unpack_data[p2_unpack_cnt * 16 +: 16];
-                    p2_stream_tlast  <= ((p2_pixel_cnt % IMG_W) == (IMG_W - 1)) ? 1'b1 : 1'b0;
+                    p2_label_valid <= 1'b1;
+                    p2_label_raw   <= p2_unpack_data[p2_unpack_cnt * 16 +: 16];
+                    p2_label_last  <= (((p2_pixel_cnt % IMG_W) == (IMG_W - 1)) ? 1'b1 : 1'b0);
                     p2_pixel_cnt     <= p2_pixel_cnt + 1;
 
                     if (p2_unpack_cnt == 2'd3 || ((p2_pixel_cnt % IMG_W) == (IMG_W - 1))) begin
@@ -245,38 +262,43 @@ module backend_processing_unit #(
                 end
             endcase
         end else begin
-            p2_stream_tvalid <= 1'b0;
+            p2_label_valid   <= 1'b0;
         end
     end
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            p2_label_valid_d1 <= 1'b0;
+            p2_label_last_d1  <= 1'b0;
+            p2_label_raw_d1   <= 16'd0;
+        end else begin
+            p2_label_valid_d1 <= p2_label_valid;
+            p2_label_last_d1  <= p2_label_last;
+            if (p2_label_valid) begin
+                p2_label_raw_d1 <= p2_label_raw;
+            end
+        end
+    end
+
+    assign p2_parent_addr  = p2_label_raw;
+    assign p2_stream_tdata = (p2_label_raw_d1 == 16'd0) ? 16'd0 : p2_parent_rdata;
+    assign p2_stream_tvalid = p2_label_valid_d1;
+    assign p2_stream_tlast  = p2_label_last_d1;
 
     // ==========================================
     // HARDWARE PROBES & PRINTS (BULLETPROOF)
     // ==========================================
-    always_ff @(posedge clk) begin
-        if (rst_n) begin
-            // 1. Log every state transition perfectly
-            if (state != next_state) begin
-                $display("[%0t] [HW-FSM] Transitioned: %s -> %s", $time, state.name(), next_state.name());
-            end
-            
-            // 2. Log DMA reading progress cleanly
-            if (state == ST_PASS2_STATS && p2_stream_tvalid && p2_stream_tlast) begin
-                if ((p2_pixel_cnt / IMG_W) % 100 == 0) begin
-                    $display("[%0t] [HW-DMA] Reader pushed line %0d / %0d to CCL Stats", $time, p2_pixel_cnt / IMG_W, IMG_H);
-                end
-            end
-        end
-    end
+    // All internal prints removed per project policy.
 
     // ==========================================
     // Template ROM Inference
     // ==========================================
     logic [31:0] template_rom [0:1023];
     initial begin
-        $readmemh("design/work/ProjectA/data/templates.mem", template_rom);
+        $readmemh("data/templates.mem", template_rom);
     end
-    always_ff @(posedge clk) begin
-        tmpl_ram_rdata <= template_rom[tmpl_ram_addr];
+    always_comb begin
+        tmpl_ram_rdata = template_rom[tmpl_ram_addr];
     end
 
     // ==========================================
@@ -297,13 +319,27 @@ module backend_processing_unit #(
             // Wait naturally for stats to complete
             ST_PASS2_STATS:   if (stats_done || p2_pixel_cnt >= (IMG_W * IMG_H)) next_state = ST_GEOMETRY;
             
-            ST_GEOMETRY:      if (geo_done)      next_state = (best_label == 0) ? ST_DONE : ST_ROI_FETCH;
+            ST_GEOMETRY: begin
+                if (geo_done && !geo_done_seen) begin
+                    next_state = ST_GEOMETRY;
+                end else if (geo_done) begin
+                    if ((obj_valid || geo_obj_seen) && (best_label != 0)) begin
+                        next_state = frame_written ? ST_ROI_FETCH : ST_GEOMETRY;
+                    end else begin
+                        next_state = ST_DONE;
+                    end
+                end
+            end
             ST_ROI_FETCH:     if (fetch_done)    next_state = ST_TEMPLATE_MACH;
             ST_TEMPLATE_MACH: if (match_done)    next_state = ST_DONE;
-            ST_DONE:          if (!cfg_enable)   next_state = ST_IDLE;
+            ST_DONE: begin
+                if (!cfg_enable || frame_eof_seen) next_state = ST_IDLE;
+            end
             default: next_state = ST_IDLE;
         endcase
     end
+
+    assign stats_clear = (state == ST_IDLE) && cfg_enable && s_axis_tvalid && s_axis_tuser;
 
     // ==========================================
     // AXI Arbiter / Multiplexer
@@ -348,10 +384,62 @@ module backend_processing_unit #(
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             latched_best_class_id <= 8'd0;
+            stream_row_cnt <= '0;
+            frame_eof_seen <= 1'b0;
+            geo_done_seen <= 1'b0;
+            geo_obj_seen <= 1'b0;
+            detected_id_reg <= 8'hFF;
+            bbox_valid_reg  <= 1'b0;
         end else begin
+            if (state == ST_IDLE) begin
+                stream_row_cnt <= '0;
+                frame_eof_seen <= 1'b0;
+                geo_done_seen <= 1'b0;
+                geo_obj_seen <= 1'b0;
+            end else begin
+                if (state == ST_PASS1_STREAM && s_axis_tvalid) begin
+                    if (s_axis_tuser) begin
+                        stream_row_cnt <= '0;
+                        frame_eof_seen <= 1'b0;
+                    end
+                    if (s_axis_tlast) begin
+                        if (stream_row_cnt == IMG_H - 1) begin
+                            frame_eof_seen <= 1'b1;
+                        end else begin
+                            stream_row_cnt <= stream_row_cnt + 1'b1;
+                        end
+                    end
+                end
+
+                if (state == ST_GEOMETRY) begin
+                    if (geo_done) begin
+                        geo_done_seen <= 1'b1;
+                    end
+                    if (obj_valid) begin
+                        geo_obj_seen <= 1'b1;
+                    end
+                end else begin
+                    geo_done_seen <= 1'b0;
+                    geo_obj_seen <= 1'b0;
+                end
+            end
+
             // Sample the result ONLY when the Matcher explicitly says it's done
             if (state == ST_TEMPLATE_MACH && match_done) begin
-                latched_best_class_id <= matcher_best_class_id;
+                if (best_score < NO_SIGN_SCORE_THRESHOLD) begin
+                    latched_best_class_id <= matcher_best_class_id;
+                    detected_id_reg <= matcher_best_class_id;
+                    bbox_valid_reg  <= 1'b1;
+                end else begin
+                    detected_id_reg <= 8'hFF;
+                    bbox_valid_reg  <= 1'b0;
+                end
+            end
+
+            // If we transition to ST_DONE from ST_GEOMETRY with no detection, force outputs to 'no detection'
+            if (state == ST_GEOMETRY && next_state == ST_DONE && !(obj_valid || geo_obj_seen)) begin
+                detected_id_reg <= 8'hFF;
+                bbox_valid_reg  <= 1'b0;
             end
         end
     end
@@ -383,15 +471,17 @@ module backend_processing_unit #(
     ccl_stats_collector #(
         .LABEL_W(LABEL_W),
         .IMG_WIDTH(IMG_W),
-        .IMG_HEIGHT(IMG_H)
+        .IMG_HEIGHT(IMG_H),
+        .USE_RESOLVED_LABELS(1'b1)
     ) u_ccl_stats (
         .clk             (clk),
         .rst_n           (rst_n),
+        .clear           (stats_clear),
         .s_axis_label    (p2_stream_tdata), 
         .s_axis_tvalid   (p2_stream_tvalid), 
         .s_axis_tuser    (1'b0), // Prevent stats reset bug
         .s_axis_tlast    (p2_stream_tlast),
-        .parent_addr     (p2_parent_addr),
+        .parent_addr     (stats_parent_addr),
         .parent_rdata    (p2_parent_rdata),
         .geo_ram_addr    (geo_ram_addr),
         .out_area        (stats_area_rdata),
@@ -400,13 +490,26 @@ module backend_processing_unit #(
         .out_xmax        (stats_xmax_rdata),
         .out_ymin        (stats_ymin_rdata),
         .out_ymax        (stats_ymax_rdata),
-        .stats_done      (stats_done)
+        .stats_done      (stats_done),
+        .init_done       (stats_init_done)
     );
 
     geometry_filter #(
         .LABEL_W(LABEL_W),
-        .MIN_AREA_TH(1000),
-        .MAX_AREA_TH(100000)
+        .MIN_AREA_TH(300),
+        .MAX_AREA_TH(100000),
+        .MIN_W_TH(34),
+        .MIN_H_TH(32),
+        .MIN_PIX_AREA_TH(313),
+        .MIN_W_RELAX_TH(31),
+        .MIN_H_RELAX_TH(30),
+        .FILL_MIN_NUM(218),
+        .FILL_MIN_DEN(1000),
+        .RELAX_SOL_NUM(400),
+        .RELAX_SOL_DEN(1000),
+        .ASPECT_RELAX_NUM(22),
+        .ASPECT_RELAX_DEN(10),
+        .MAX_CANDIDATES(5)
     ) u_geometry_filter (
         .clk           (clk),
         .rst_n         (rst_n),

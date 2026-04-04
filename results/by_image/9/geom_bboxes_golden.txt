@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+252 90 128 937 970

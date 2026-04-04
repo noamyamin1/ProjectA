@@ -1,0 +1,40 @@
+Expected vs Actual Template Matching
+=====================================
+
+1: FAIL (expected no sign, got 1 ROI(s))
+11: PASS (expected 100 vel, got 17 100 vel score=123)
+12: PASS (expected no sign, no ROIs)
+13: PASS (expected no sign, no ROIs)
+14: PASS (expected left turn, got 14 left turn score=73)
+15: FAIL (expected right intersection, got 8 left intersection score=206)
+16: PASS (expected 100 vel, got 0 100 vel score=169)
+17: PASS (expected 70 vel, got 9 70 vel score=112)
+18: FAIL (expected 50 vel, got no ROIs)
+19: PASS (expected no sign, no ROIs)
+2: PASS (expected no sign, no ROIs)
+20: PASS (expected urban area, got 12 urban area score=73)
+21: PASS (expected urban area, got 12 urban area score=116)
+22: PASS (expected road works, got 15 road works score=158)
+23: FAIL (expected road works, got no ROIs)
+24: PASS (expected road works, got 15 road works score=73)
+25: PASS (expected 60 vel, got 7 60 vel score=221)
+26: FAIL (expected 60 vel, got no ROIs)
+27: PASS (expected urban area, 60 vel, got 7 60 vel score=175)
+3: PASS (expected no sign, no ROIs)
+4: FAIL (expected right intersection, got no ROIs)
+5: PASS (expected no sign, no ROIs)
+6: PASS (expected 70 vel, got 9 70 vel score=138)
+7: PASS (expected no right turn, got 16 no right turn score=154)
+slippery_road: PASS (expected slippery 2, got 11 slippery 2 score=165)
+slippery_road_redcar: PASS (expected slippery 2, got 11 slippery 2 score=179)
+
+Summary
+-------
+Total checked: 26
+Passed: 20
+Failed: 6
+Missing results: 0
+Skipped: 6
+
+Unexpected result directories:
+- WhatsApp Image 2026-01-05 at 10.39.09

@@ -1,0 +1,113 @@
+STAGE: CCL_STATS
+GOLDEN_LABELS: 930
+RTL_LABELS: 929
+MISSING_LABELS_IN_RTL: 1
+EXTRA_LABELS_IN_RTL: 0
+FIELD_MISMATCHES: 101
+STATUS: FAIL
+
+Missing labels in RTL:
+90
+
+Field mismatches (label field golden rtl):
+1 area 32572 32462
+1 perimeter 6454 6440
+1 xmax 1919 4095
+3 area 288 297
+3 perimeter 112 121
+5 area 1459 1451
+5 perimeter 408 400
+24 area 2 3
+24 perimeter 2 3
+24 xmin 1783 1782
+31 xmax 1919 4095
+74 area 12 17
+74 perimeter 12 17
+74 xmin 1815 1814
+91 area 2 3
+91 perimeter 2 3
+91 xmax 1 4095
+120 area 68 102
+120 perimeter 68 102
+120 xmax 1 4095
+234 perimeter 36 37
+234 xmax 1919 4095
+354 area 22 33
+354 perimeter 22 33
+354 xmax 1 4095
+422 area 76 114
+422 perimeter 76 114
+422 xmax 1 4095
+647 area 34 51
+647 perimeter 34 51
+647 xmax 1 4095
+668 area 13 16
+668 perimeter 11 14
+668 xmin 1680 1679
+746 area 15 12
+746 perimeter 13 11
+746 xmax 1919 1918
+747 area 6 9
+747 perimeter 6 9
+747 xmax 1 4095
+946 area 6223 6225
+946 perimeter 941 943
+1045 area 9935 9938
+1045 perimeter 1778 1781
+1238 area 15 16
+1238 perimeter 15 16
+1238 xmin 1698 1697
+1261 area 193 187
+1261 perimeter 111 105
+1261 xmax 1408 1407
+1396 area 789 791
+1396 perimeter 215 217
+1396 xmin 598 597
+1436 area 91 89
+1436 perimeter 56 54
+1436 xmax 597 596
+1575 area 3 2
+1575 perimeter 3 2
+1575 xmax 1919 1918
+1576 area 2 3
+1576 perimeter 2 3
+1576 xmax 1 4095
+1587 xmax 1919 4095
+1587 ymax 392 393
+1619 area 16502 16458
+1619 perimeter 2514 2507
+1619 xmax 1919 1918
+1621 area 78 117
+1621 perimeter 78 117
+1621 xmax 1 4095
+1742 area 24 29
+1742 perimeter 15 20
+1742 xmin 1575 1574
+1744 area 10315 10319
+1744 perimeter 1441 1445
+1744 xmax 338 4095
+1874 area 90 86
+1874 perimeter 64 60
+1874 xmax 1919 1918
+1974 area 13 17
+1974 perimeter 13 17
+1974 xmin 770 769
+1980 area 385 381
+1980 perimeter 110 106
+2192 area 601 599
+2192 perimeter 211 209
+2192 xmax 1015 1014
+2193 area 79 81
+2193 perimeter 39 41
+2262 area 105 103
+2262 perimeter 54 53
+2262 xmax 1919 4095
+2267 area 4 6
+2267 perimeter 4 6
+2267 xmax 1 4095
+2327 area 218 208
+2327 perimeter 74 72
+2327 xmax 1919 1918
+2328 area 22 32
+2328 perimeter 22 32
+2328 xmax 1 4095

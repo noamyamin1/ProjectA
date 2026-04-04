@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+878 1115 1177 588 661

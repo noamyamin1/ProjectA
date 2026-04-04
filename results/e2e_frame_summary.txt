@@ -1,0 +1,22 @@
+frame,object_detected,template_detected,correct_detection
+11,YES,100 vel,CORRECT
+12,NO,NO,NO_BBOX_WRONG
+13,NO,NO,NO_BBOX_WRONG
+14,YES,left turn,CORRECT
+15,NO,NO,NO_BBOX_WRONG
+16,YES,100 vel,CORRECT
+17,YES,70 vel,CORRECT
+18,YES,50 vel,CORRECT
+19,NO,NO,NO_BBOX_WRONG
+2,NO,NO,NO_BBOX_WRONG
+20,YES,urban area,CORRECT
+21,YES,urban area,CORRECT
+22,YES,road works,CORRECT
+23,NO,NO,NO_BBOX_WRONG
+24,YES,road works,CORRECT
+25,YES,60 vel,CORRECT
+27,YES,60 vel,CORRECT
+5,NO,NO,NO_BBOX_WRONG
+6,YES,70 vel,CORRECT
+7,YES,no right turn,CORRECT
+slippery_road_redcar,YES,slippery 2,CORRECT

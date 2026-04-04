@@ -1,0 +1,214 @@
+Chronologic VCS simulator copyright 1991-2022
+Contains Synopsys proprietary information.
+Compiler version T-2022.06-SP2_Full64; Runtime version T-2022.06-SP2_Full64;  Apr  1 14:59 2026
+[FSM] 000 -> xxx
+[0] System Asserting Reset...
+[275000] Streaming frame 0: 11.png (pass 0)
+[275000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/11/image_in.hex
+[275000] Loading complete. Streaming to DUT...
+[285000] SOF_ACCEPTED: frame=11.png pass=0 fw=0 addr=0x00000000 row=0
+[295000] SOF_POST: frame=11.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[51840285000] FRAME_WRITTEN: asserted (frame=11.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[95940785000] GEO_DONE: bbox=[0,0,0,0] label=0
+[95940805000] ROI_FETCH: bbox=[541,637,540,631] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[96667875000] ID_CHECK: frame=11.png pass=0 geom_detected=1 current_id=17 last_valid_id=17 csr_class=17
+[DETECTION] Sign candidate exists. bbox=[541,637,540,631] current_id=17
+[96667915000] Streaming frame 1: 12.png (pass 0)
+[96667915000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/12/image_in.hex
+[96667915000] Loading complete. Streaming to DUT...
+[96667925000] SOF_ACCEPTED: frame=12.png pass=0 fw=1 addr=0x007e9000 row=1079
+[96667935000] SOF_POST: frame=12.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[148507925000] FRAME_WRITTEN: asserted (frame=12.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[192606745000] GEO_DONE: bbox=[541,637,540,631] label=1
+[192606895000] ID_CHECK: frame=12.png pass=0 geom_detected=0 current_id=255 last_valid_id=17 csr_class=17
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=17
+[192606935000] Streaming frame 2: 13.png (pass 0)
+[192606935000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/13/image_in.hex
+[192606935000] Loading complete. Streaming to DUT...
+[192606945000] SOF_ACCEPTED: frame=13.png pass=0 fw=1 addr=0x007e9000 row=1079
+[192606955000] SOF_POST: frame=13.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[244446945000] FRAME_WRITTEN: asserted (frame=13.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[288545735000] GEO_DONE: bbox=[541,637,540,631] label=1
+[288545885000] ID_CHECK: frame=13.png pass=0 geom_detected=0 current_id=255 last_valid_id=17 csr_class=17
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=17
+[288545925000] Streaming frame 3: 14.png (pass 0)
+[288545925000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/14/image_in.hex
+[288545925000] Loading complete. Streaming to DUT...
+[288545935000] SOF_ACCEPTED: frame=14.png pass=0 fw=1 addr=0x007e9000 row=1079
+[288545945000] SOF_POST: frame=14.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[340385935000] FRAME_WRITTEN: asserted (frame=14.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[384485505000] GEO_DONE: bbox=[541,637,540,631] label=1
+[384485525000] ROI_FETCH: bbox=[1604,1668,618,677] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[385212595000] ID_CHECK: frame=14.png pass=0 geom_detected=1 current_id=14 last_valid_id=14 csr_class=14
+[DETECTION] Sign candidate exists. bbox=[1604,1668,618,677] current_id=14
+[385212635000] Streaming frame 4: 15.png (pass 0)
+[385212635000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/15/image_in.hex
+[385212635000] Loading complete. Streaming to DUT...
+[385212645000] SOF_ACCEPTED: frame=15.png pass=0 fw=1 addr=0x007e9000 row=1079
+[385212655000] SOF_POST: frame=15.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[437052645000] FRAME_WRITTEN: asserted (frame=15.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[481151945000] GEO_DONE: bbox=[1604,1668,618,677] label=1
+[481152095000] ID_CHECK: frame=15.png pass=0 geom_detected=0 current_id=255 last_valid_id=14 csr_class=14
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=14
+[481152135000] Streaming frame 5: 16.png (pass 0)
+[481152135000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/16/image_in.hex
+[481152135000] Loading complete. Streaming to DUT...
+[481152145000] SOF_ACCEPTED: frame=16.png pass=0 fw=1 addr=0x007e9000 row=1079
+[481152155000] SOF_POST: frame=16.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[532992145000] FRAME_WRITTEN: asserted (frame=16.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[577091115000] GEO_DONE: bbox=[1604,1668,618,677] label=1
+[577091135000] ROI_FETCH: bbox=[1480,1516,632,668] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[577818205000] ID_CHECK: frame=16.png pass=0 geom_detected=1 current_id=0 last_valid_id=0 csr_class=0
+[DETECTION] Sign candidate exists. bbox=[1480,1516,632,668] current_id=0
+[577818245000] Streaming frame 6: 17.png (pass 0)
+[577818245000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/17/image_in.hex
+[577818245000] Loading complete. Streaming to DUT...
+[577818255000] SOF_ACCEPTED: frame=17.png pass=0 fw=1 addr=0x007e9000 row=1079
+[577818265000] SOF_POST: frame=17.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[629658255000] FRAME_WRITTEN: asserted (frame=17.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[673765665000] GEO_DONE: bbox=[1480,1516,632,668] label=1
+[673765685000] ROI_FETCH: bbox=[1756,1808,645,690] label=4 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[674492755000] ID_CHECK: frame=17.png pass=0 geom_detected=1 current_id=9 last_valid_id=9 csr_class=9
+[DETECTION] Sign candidate exists. bbox=[1756,1808,645,690] current_id=9
+[674492795000] Streaming frame 7: 18.png (pass 0)
+[674492795000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/18/image_in.hex
+[674492795000] Loading complete. Streaming to DUT...
+[674492805000] SOF_ACCEPTED: frame=18.png pass=0 fw=1 addr=0x007e9000 row=1079
+[674492815000] SOF_POST: frame=18.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[726332805000] FRAME_WRITTEN: asserted (frame=18.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[770439705000] GEO_DONE: bbox=[1756,1808,645,690] label=4
+[770439725000] ROI_FETCH: bbox=[1426,1459,620,652] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[771166795000] ID_CHECK: frame=18.png pass=0 geom_detected=1 current_id=5 last_valid_id=5 csr_class=5
+[DETECTION] Sign candidate exists. bbox=[1426,1459,620,652] current_id=5
+[771166835000] Streaming frame 8: 19.png (pass 0)
+[771166835000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/19/image_in.hex
+[771166835000] Loading complete. Streaming to DUT...
+[771166845000] SOF_ACCEPTED: frame=19.png pass=0 fw=1 addr=0x007e9000 row=1079
+[771166855000] SOF_POST: frame=19.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[823006845000] FRAME_WRITTEN: asserted (frame=19.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[867119115000] GEO_DONE: bbox=[1426,1459,620,652] label=1
+[867119265000] ID_CHECK: frame=19.png pass=0 geom_detected=0 current_id=255 last_valid_id=5 csr_class=5
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=5
+[867119305000] Streaming frame 9: 20.png (pass 0)
+[867119305000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/20/image_in.hex
+[867119305000] Loading complete. Streaming to DUT...
+[867119315000] SOF_ACCEPTED: frame=20.png pass=0 fw=1 addr=0x007e9000 row=1079
+[867119325000] SOF_POST: frame=20.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[918959315000] FRAME_WRITTEN: asserted (frame=20.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[963068315000] GEO_DONE: bbox=[1426,1459,620,652] label=1
+[963068335000] ROI_FETCH: bbox=[1706,1739,710,741] label=29 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[963795405000] ID_CHECK: frame=20.png pass=0 geom_detected=1 current_id=12 last_valid_id=12 csr_class=12
+[DETECTION] Sign candidate exists. bbox=[1706,1739,710,741] current_id=12
+[963795445000] Streaming frame 10: 21.png (pass 0)
+[963795445000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/21/image_in.hex
+[963795445000] Loading complete. Streaming to DUT...
+[963795455000] SOF_ACCEPTED: frame=21.png pass=0 fw=1 addr=0x007e9000 row=1079
+[963795465000] SOF_POST: frame=21.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1015635455000] FRAME_WRITTEN: asserted (frame=21.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1059743795000] GEO_DONE: bbox=[1706,1739,710,741] label=29
+[1059743815000] ROI_FETCH: bbox=[1574,1625,630,679] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1060470885000] ID_CHECK: frame=21.png pass=0 geom_detected=1 current_id=12 last_valid_id=12 csr_class=12
+[DETECTION] Sign candidate exists. bbox=[1574,1625,630,679] current_id=12
+[1060470925000] Streaming frame 11: 22.png (pass 0)
+[1060470925000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/22/image_in.hex
+[1060470925000] Loading complete. Streaming to DUT...
+[1060470935000] SOF_ACCEPTED: frame=22.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1060470945000] SOF_POST: frame=22.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1112310935000] FRAME_WRITTEN: asserted (frame=22.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1156423325000] GEO_DONE: bbox=[1574,1625,630,679] label=1
+[1156423345000] ROI_FETCH: bbox=[641,678,600,638] label=57 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1157150415000] ID_CHECK: frame=22.png pass=0 geom_detected=1 current_id=15 last_valid_id=15 csr_class=15
+[DETECTION] Sign candidate exists. bbox=[641,678,600,638] current_id=15
+[1157150455000] Streaming frame 12: 23.png (pass 0)
+[1157150455000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/23/image_in.hex
+[1157150455000] Loading complete. Streaming to DUT...
+[1157150465000] SOF_ACCEPTED: frame=23.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1157150475000] SOF_POST: frame=23.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1208990465000] FRAME_WRITTEN: asserted (frame=23.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1253108515000] GEO_DONE: bbox=[641,678,600,638] label=57
+[1253108665000] ID_CHECK: frame=23.png pass=0 geom_detected=0 current_id=255 last_valid_id=15 csr_class=15
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=15
+[1253108705000] Streaming frame 13: 24.png (pass 0)
+[1253108705000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/24/image_in.hex
+[1253108705000] Loading complete. Streaming to DUT...
+[1253108715000] SOF_ACCEPTED: frame=24.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1253108725000] SOF_POST: frame=24.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1304948715000] FRAME_WRITTEN: asserted (frame=24.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1349069555000] GEO_DONE: bbox=[641,678,600,638] label=57
+[1349069575000] ROI_FETCH: bbox=[224,305,510,586] label=49 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1349796645000] ID_CHECK: frame=24.png pass=0 geom_detected=1 current_id=15 last_valid_id=15 csr_class=15
+[DETECTION] Sign candidate exists. bbox=[224,305,510,586] current_id=15
+[1349796685000] Streaming frame 14: 25.png (pass 0)
+[1349796685000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/25/image_in.hex
+[1349796685000] Loading complete. Streaming to DUT...
+[1349796695000] SOF_ACCEPTED: frame=25.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1349796705000] SOF_POST: frame=25.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1401636695000] FRAME_WRITTEN: asserted (frame=25.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1445752945000] GEO_DONE: bbox=[224,305,510,586] label=49
+[1445752965000] ROI_FETCH: bbox=[333,375,572,617] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1446480035000] ID_CHECK: frame=25.png pass=0 geom_detected=1 current_id=7 last_valid_id=7 csr_class=7
+[DETECTION] Sign candidate exists. bbox=[333,375,572,617] current_id=7
+[1446480075000] Streaming frame 15: 27.png (pass 0)
+[1446480075000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/27/image_in.hex
+[1446480075000] Loading complete. Streaming to DUT...
+[1446480085000] SOF_ACCEPTED: frame=27.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1446480095000] SOF_POST: frame=27.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1498320085000] FRAME_WRITTEN: asserted (frame=27.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1542468985000] GEO_DONE: bbox=[333,375,572,617] label=1
+[1542469005000] ROI_FETCH: bbox=[386,443,638,696] label=78 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1543196075000] ID_CHECK: frame=27.png pass=0 geom_detected=1 current_id=7 last_valid_id=7 csr_class=7
+[DETECTION] Sign candidate exists. bbox=[386,443,638,696] current_id=7
+[1543196115000] Streaming frame 16: 6.png (pass 0)
+[1543196115000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/6/image_in.hex
+[1543196115000] Loading complete. Streaming to DUT...
+[1543196125000] SOF_ACCEPTED: frame=6.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1543196135000] SOF_POST: frame=6.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1595036125000] FRAME_WRITTEN: asserted (frame=6.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1639174255000] GEO_DONE: bbox=[386,443,638,696] label=78
+[1639174275000] ROI_FETCH: bbox=[813,861,619,669] label=1 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1639901345000] ID_CHECK: frame=6.png pass=0 geom_detected=1 current_id=9 last_valid_id=9 csr_class=9
+[DETECTION] Sign candidate exists. bbox=[813,861,619,669] current_id=9
+[1639901385000] Streaming frame 17: 7.png (pass 0)
+[1639901385000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/7/image_in.hex
+[1639901385000] Loading complete. Streaming to DUT...
+[1639901395000] SOF_ACCEPTED: frame=7.png pass=0 fw=1 addr=0x007e9000 row=1079
+[1639901405000] SOF_POST: frame=7.png pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1691741395000] FRAME_WRITTEN: asserted (frame=7.png pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1735881055000] GEO_DONE: bbox=[813,861,619,669] label=1
+[1735881075000] ROI_FETCH: bbox=[1789,1835,593,643] label=15 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1736608145000] ID_CHECK: frame=7.png pass=0 geom_detected=1 current_id=16 last_valid_id=16 csr_class=16
+[DETECTION] Sign candidate exists. bbox=[1789,1835,593,643] current_id=16
+[1736608185000] Streaming frame 18: slippery_road_redcar.jpg (pass 0)
+[1736608185000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/slippery_road_redcar/image_in.hex
+[1736608185000] Loading complete. Streaming to DUT...
+[1736608195000] SOF_ACCEPTED: frame=slippery_road_redcar.jpg pass=0 fw=1 addr=0x007e9000 row=1079
+[1736608205000] SOF_POST: frame=slippery_road_redcar.jpg pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1788448195000] FRAME_WRITTEN: asserted (frame=slippery_road_redcar.jpg pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1832594095000] GEO_DONE: bbox=[1789,1835,593,643] label=15
+[1832594115000] ROI_FETCH: bbox=[2,130,527,631] label=2 frame_written=1 addr=0x007e9000 row=1079 last_row=1
+[1833321185000] ID_CHECK: frame=slippery_road_redcar.jpg pass=0 geom_detected=1 current_id=11 last_valid_id=11 csr_class=11
+[DETECTION] Sign candidate exists. bbox=[2,130,527,631] current_id=11
+[1833321225000] Streaming frame 19: 2.jpeg (pass 0)
+[1833321225000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/2/image_in.hex
+[1833321225000] Loading complete. Streaming to DUT...
+[1833321235000] SOF_ACCEPTED: frame=2.jpeg pass=0 fw=1 addr=0x007e9000 row=1079
+[1833321245000] SOF_POST: frame=2.jpeg pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1885161235000] FRAME_WRITTEN: asserted (frame=2.jpeg pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[1929520645000] GEO_DONE: bbox=[2,130,527,631] label=2
+[1929520795000] ID_CHECK: frame=2.jpeg pass=0 geom_detected=0 current_id=255 last_valid_id=11 csr_class=11
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=11
+[1929520835000] Streaming frame 20: 5.jpeg (pass 0)
+[1929520835000] Loading image into memory array: /users/epnyrk/Project/design/work/ProjectA/results/by_image/5/image_in.hex
+[1929520835000] Loading complete. Streaming to DUT...
+[1929520845000] SOF_ACCEPTED: frame=5.jpeg pass=0 fw=1 addr=0x007e9000 row=1079
+[1929520855000] SOF_POST: frame=5.jpeg pass=0 fw=0 addr=0x00000000 row=0 last_row=0 pix_idx=1 state=0
+[1981360845000] FRAME_WRITTEN: asserted (frame=5.jpeg pass=0 addr=0x007e9000 row=1079 last_row=1 pix_idx=0)
+[2025678105000] GEO_DONE: bbox=[2,130,527,631] label=2
+[2025678255000] ID_CHECK: frame=5.jpeg pass=0 geom_detected=0 current_id=255 last_valid_id=11 csr_class=11
+[DETECTION] No sign candidate (no bbox). current_id=255 last_valid_id=11
+$finish called from file "design/work/ProjectA/tb/road_sign_detector_top_tb.sv", line 1400.
+$finish at simulation time        2025679295000
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 2025679295000 ps
+CPU Time:   1232.850 seconds;       Data structure size:   2.1Mb
+Wed Apr  1 15:19:39 2026

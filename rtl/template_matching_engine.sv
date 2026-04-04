@@ -3,7 +3,7 @@
 module template_matching_engine #(
     parameter int TARGET_W = 64,
     parameter int TARGET_H = 64,
-    parameter int TEMPLATE_COUNT = 19,
+    parameter int TEMPLATE_COUNT = 18,
     parameter int TEMPLATE_ADDR_W = 11 
 )(
     input  logic         clk,
@@ -55,6 +55,9 @@ module template_matching_engine #(
     logic [31:0] min_mismatches;
     logic [7:0]  min_class_id;
 
+    logic [31:0] debug_scores [0:TEMPLATE_COUNT-1];
+    logic [31:0] tmpl_best_mismatches;
+
     // --- Binarization Logic ---
     logic [5:0] binarize_x_pos;
     logic [7:0] binarize_threshold;
@@ -73,16 +76,8 @@ module template_matching_engine #(
     assign raw_row  = (actual_y >= 0 && actual_y < 32 && match_row_cnt < 32) ? bin_roi[actual_y] : 32'b0;
     assign actual_x = $signed({1'b0, dx_idx}) - 5'sd4;
 
-    // --- Pipeline Registers ---
-    logic [31:0] pl_raw_roi_row;
-    logic [31:0] pl_shifted_roi_row;
-    logic [31:0] pl_rom_data;
-    logic [31:0] pl_valid_mask;
-    
-    logic pl_eval_valid_1;
-    logic pl_eval_valid_2;
-    logic eval_valid;
-
+    // --- Matching Datapath ---
+    logic [31:0] shifted_row;
     logic [31:0] xor_result;
     logic [5:0]  popcount_val;
 
@@ -97,7 +92,7 @@ module template_matching_engine #(
             ST_IDLE:      if (s_axis_gray_tvalid) next_state = ST_RCV_ROI;
             ST_RCV_ROI:   if (s_axis_gray_tvalid && s_axis_gray_tlast) next_state = ST_CALC_MEAN;
             ST_CALC_MEAN: next_state = ST_BINARIZE;
-            ST_BINARIZE:  if (buf_rd_addr_d1 == 4095) next_state = ST_MATCHING;
+            ST_BINARIZE:  if (buf_rd_addr == 4095) next_state = ST_MATCHING;
             ST_MATCHING:  if (template_idx == TEMPLATE_COUNT) next_state = ST_DONE;
             ST_DONE:      next_state = ST_IDLE;
             default:      next_state = ST_IDLE;
@@ -105,12 +100,21 @@ module template_matching_engine #(
     end
 
     // --- Input ROI Buffer & Mean ---
-    always_ff @(posedge clk) begin
-        if ((state == ST_IDLE || state == ST_RCV_ROI) && s_axis_gray_tvalid) begin
-            roi_buf[pixel_cnt] <= s_axis_gray_tdata;
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            buf_rd_data <= '0;
+            buf_rd_addr_d1 <= '0;
+        end else begin
+            if ((state == ST_IDLE || state == ST_RCV_ROI) && s_axis_gray_tvalid) begin
+                roi_buf[pixel_cnt] <= s_axis_gray_tdata;
+            end
+            buf_rd_data <= roi_buf[buf_rd_addr];
+            if (state == ST_CALC_MEAN) begin
+                buf_rd_addr_d1 <= '0;
+            end else begin
+                buf_rd_addr_d1 <= buf_rd_addr;
+            end
         end
-        buf_rd_data <= roi_buf[buf_rd_addr];
-        buf_rd_addr_d1 <= buf_rd_addr;
     end
 
     always_ff @(posedge clk or negedge rst_n) begin
@@ -175,7 +179,7 @@ module template_matching_engine #(
         end
     end
 
-    // --- Pipeline Stage 1: Fetch Row & Calc Mask ---
+    // --- Matching: Shift Row & Calc Mask ---
     logic [31:0] current_x_mask;
     
     always_comb begin
@@ -188,55 +192,33 @@ module template_matching_engine #(
         end
     end
 
-    always_ff @(posedge clk) begin
-        if (state == ST_MATCHING) begin
-            pl_raw_roi_row <= raw_row;
-        end
-    end
-
-    // --- Pipeline Stage 2: Shift Row, Capture ROM & Mask ---
-    always_ff @(posedge clk) begin
-        if (state == ST_MATCHING) begin
-            if (actual_x > 0)
-                pl_shifted_roi_row <= pl_raw_roi_row << actual_x;
-            else if (actual_x < 0)
-                pl_shifted_roi_row <= pl_raw_roi_row >> (-actual_x);
-            else
-                pl_shifted_roi_row <= pl_raw_roi_row;
-
-            pl_rom_data   <= template_ram_rdata;
-            pl_valid_mask <= current_x_mask;
-        end
-    end
-
-    // --- Pipeline Stage 3: Masked Popcount ---
     always_comb begin
-        xor_result = (pl_shifted_roi_row ^ pl_rom_data) & pl_valid_mask;
-        
+        if (actual_x > 0)
+            shifted_row = raw_row << actual_x;
+        else if (actual_x < 0)
+            shifted_row = raw_row >> (-actual_x);
+        else
+            shifted_row = raw_row;
+    end
+
+    always_comb begin
+        xor_result = (shifted_row ^ template_ram_rdata) & current_x_mask;
+
         popcount_val = '0;
         for (int i = 0; i < 32; i++) begin
             popcount_val = popcount_val + xor_result[i];
         end
     end
 
-    // --- Valid Signal Shift Register ---
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            pl_eval_valid_1 <= 1'b0;
-            pl_eval_valid_2 <= 1'b0;
-            eval_valid      <= 1'b0;
-        end else if (state == ST_MATCHING) begin
-            pl_eval_valid_1 <= (match_row_cnt < 6'd32);
-            pl_eval_valid_2 <= pl_eval_valid_1;
-            eval_valid      <= pl_eval_valid_2;
-        end else begin
-            pl_eval_valid_1 <= 1'b0;
-            pl_eval_valid_2 <= 1'b0;
-            eval_valid      <= 1'b0;
+    always_comb begin
+        template_ram_addr = '0;
+        if (state == ST_MATCHING && match_row_cnt < 6'd32) begin
+            template_ram_addr = (template_idx * 32) + match_row_cnt;
         end
     end
 
     // --- State Machine & Accumulation ---
+    integer idx;
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             template_idx       <= '0;
@@ -246,7 +228,10 @@ module template_matching_engine #(
             current_mismatches <= '0;
             min_mismatches     <= 32'hFFFFFFFF;
             min_class_id       <= '0;
-            template_ram_addr  <= '0;
+            tmpl_best_mismatches <= 32'hFFFFFFFF;
+            for (idx = 0; idx < TEMPLATE_COUNT; idx = idx + 1) begin
+                debug_scores[idx] <= 32'hFFFFFFFF;
+            end
         end else begin
             if (state == ST_IDLE) begin
                 template_idx       <= '0;
@@ -256,22 +241,25 @@ module template_matching_engine #(
                 current_mismatches <= '0;
                 min_mismatches     <= 32'hFFFFFFFF;
                 min_class_id       <= '0;
+                tmpl_best_mismatches <= 32'hFFFFFFFF;
+                for (idx = 0; idx < TEMPLATE_COUNT; idx = idx + 1) begin
+                    debug_scores[idx] <= 32'hFFFFFFFF;
+                end
             end else if (state == ST_MATCHING) begin
                 
-                if (match_row_cnt < 6'd34) begin
-                    if (match_row_cnt < 6'd32) begin
-                        template_ram_addr <= (template_idx * 32) + match_row_cnt;
-                    end
+                if (match_row_cnt < 6'd32) begin
                     match_row_cnt <= match_row_cnt + 1;
-                    
-                    if (eval_valid) begin
-                        current_mismatches <= current_mismatches + popcount_val;
-                    end
-                    
+                    current_mismatches <= current_mismatches + popcount_val;
                 end else begin
-                    if (current_mismatches < min_mismatches) begin
-                        min_mismatches <= current_mismatches;
-                        min_class_id   <= template_idx;
+                    logic [31:0] next_best;
+                    next_best = (current_mismatches < tmpl_best_mismatches) ? current_mismatches : tmpl_best_mismatches;
+                    tmpl_best_mismatches <= next_best;
+
+                    if (dx_idx == 4'd8 && dy_idx == 4'd8) begin
+                        if (next_best < min_mismatches) begin
+                            min_mismatches <= next_best;
+                            min_class_id   <= template_idx;
+                        end
                     end
                     
                     if (dx_idx < 4'd8) begin
@@ -282,6 +270,10 @@ module template_matching_engine #(
                             dy_idx <= dy_idx + 1;
                         end else begin
                             dy_idx <= '0;
+                            if (template_idx < TEMPLATE_COUNT) begin
+                                debug_scores[template_idx] <= next_best;
+                            end
+                            tmpl_best_mismatches <= 32'hFFFFFFFF;
                             template_idx <= template_idx + 1;
                         end
                     end

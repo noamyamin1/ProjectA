@@ -1,0 +1,4 @@
+STAGE: CCL
+PASS_1_OK: True
+PASS_2_OK: True
+STATUS: PASS

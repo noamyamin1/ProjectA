@@ -1,0 +1,18 @@
+STAGE: CCL_STATS
+GOLDEN_LABELS: 57
+RTL_LABELS: 57
+MISSING_LABELS_IN_RTL: 0
+EXTRA_LABELS_IN_RTL: 0
+FIELD_MISMATCHES: 9
+STATUS: FAIL
+
+Field mismatches (label field golden rtl):
+14 area 36 33
+14 perimeter 29 27
+14 xmax 1919 1918
+17 area 37 52
+17 perimeter 37 52
+17 xmax 1 4095
+18 area 344 332
+18 perimeter 92 89
+18 xmax 1919 1918

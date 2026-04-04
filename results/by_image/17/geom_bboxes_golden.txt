@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+4 1756 1808 645 690

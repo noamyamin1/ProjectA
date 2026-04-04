@@ -1,6 +1,7 @@
 module rgb_frame_writer #(
     parameter int AXI_ADDR_W = 32,
-    parameter int AXI_DATA_W = 64
+    parameter int AXI_DATA_W = 64,
+    parameter int IMG_H = 1080
 )(
     input  logic                  clk,
     input  logic                  rst_n,
@@ -13,6 +14,8 @@ module rgb_frame_writer #(
     input  logic                  s_axis_tuser,
     input  logic                  s_axis_tlast,
     output logic                  s_axis_tready,
+
+    output logic                  frame_written,
 
     output logic [AXI_ADDR_W-1:0] m_axi_awaddr,
     output logic [7:0]            m_axi_awlen,
@@ -44,6 +47,10 @@ module rgb_frame_writer #(
     logic [31:0] pixel_buf;
     logic        pixel_idx;
     logic [31:0] addr_offset;
+    logic [$clog2(IMG_H+1)-1:0] row_cnt;
+    logic        last_row_seen;
+
+    wire accept_pixel = enable && s_axis_tvalid && s_axis_tready;
 
     assign s_axis_tready = (state == ST_IDLE) && enable;
 
@@ -88,24 +95,47 @@ module rgb_frame_writer #(
             pixel_buf   <= '0;
             addr_offset <= '0;
             m_axi_wdata <= '0;
+            row_cnt     <= '0;
+            frame_written <= 1'b0;
+            last_row_seen <= 1'b0;
         end else begin
-            if (enable && s_axis_tvalid && state == ST_IDLE) begin
+            if (!enable) begin
+                row_cnt <= '0;
+                frame_written <= 1'b0;
+                last_row_seen <= 1'b0;
+            end else begin
                 if (s_axis_tuser) begin
                     addr_offset <= '0;
                     pixel_idx   <= 1'b0;
+                    row_cnt <= '0;
+                    frame_written <= 1'b0;
+                    last_row_seen <= 1'b0;
                 end
 
-                if (pixel_idx == 1'b0) begin
-                    pixel_buf <= {8'h00, s_axis_tdata};
-                    pixel_idx <= 1'b1;
-                end else begin
-                    m_axi_wdata <= {{8'h00, s_axis_tdata}, pixel_buf};
-                    pixel_idx   <= 1'b0;
+                if (accept_pixel) begin
+                    if (pixel_idx == 1'b0) begin
+                        pixel_buf <= {8'h00, s_axis_tdata};
+                        pixel_idx <= 1'b1;
+                    end else begin
+                        m_axi_wdata <= {{8'h00, s_axis_tdata}, pixel_buf};
+                        pixel_idx   <= 1'b0;
+                    end
+
+                    if (s_axis_tlast) begin
+                        if (row_cnt == IMG_H - 1) begin
+                            last_row_seen <= 1'b1;
+                        end else begin
+                            row_cnt <= row_cnt + 1'b1;
+                        end
+                    end
                 end
-            end
-            
-            if (state == ST_B_WAIT && m_axi_bvalid) begin
-                addr_offset <= addr_offset + 8;
+
+                if (state == ST_B_WAIT && m_axi_bvalid && m_axi_bready) begin
+                    addr_offset <= addr_offset + 8;
+                    if (last_row_seen) begin
+                        frame_written <= 1'b1;
+                    end
+                end
             end
         end
     end

@@ -2,7 +2,7 @@
 
 module ccl_pass1_labeler #(
     parameter int IMG_WIDTH = 1920,
-    parameter int LABEL_W   = 11
+    parameter int LABEL_W   = 16
 )(
     input  logic               clk,
     input  logic               rst_n,
@@ -22,12 +22,10 @@ module ccl_pass1_labeler #(
     output logic [LABEL_W-1:0] parent_wdata
 );
 
-    // ==========================================
-    // Block 1: Internal Signals & Line Buffer
-    // ==========================================
-    logic [LABEL_W-1:0] line_buf [0:IMG_WIDTH-1] = '{default: '0};
+    logic [LABEL_W-1:0] line_buf [0:IMG_WIDTH-1];
 
     logic [15:0]        x_cnt;
+    logic [15:0]        row_cnt;
     logic               mask_q;
     logic               valid_q;
     logic               user_q;
@@ -38,9 +36,6 @@ module ccl_pass1_labeler #(
     logic [LABEL_W-1:0] next_label_cnt;
     logic [LABEL_W-1:0] out_label;
 
-    // ==========================================
-    // Block 2: X Coordinate Counter
-    // ==========================================
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             x_cnt <= '0;
@@ -52,12 +47,19 @@ module ccl_pass1_labeler #(
         end
     end
 
-    // ==========================================
-    // Block 3: Line Buffer Read & Input Delay
-    // ==========================================
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            row_cnt <= '0;
+        end else if (s_axis_tvalid && s_axis_tuser) begin
+            row_cnt <= '0;
+        end else if (s_axis_tvalid && s_axis_tlast) begin
+            row_cnt <= row_cnt + 1'b1;
+        end
+    end
+
     always_ff @(posedge clk) begin
         if (s_axis_tvalid) begin
-            up_label <= line_buf[x_cnt];
+            up_label <= (row_cnt == 0) ? '0 : line_buf[x_cnt];
             mask_q   <= s_axis_tdata;
             valid_q  <= 1'b1;
             user_q   <= s_axis_tuser;
@@ -67,9 +69,6 @@ module ccl_pass1_labeler #(
         end
     end
 
-    // ==========================================
-    // Block 4: Label Resolution Logic (With Overflow Protection)
-    // ==========================================
     always_comb begin
         out_label    = '0;
         parent_we    = 1'b0;
@@ -109,13 +108,13 @@ module ccl_pass1_labeler #(
         end
     end
 
-    // ==========================================
-    // Block 5: State Updates (Counters & Buffers)
-    // ==========================================
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             left_label     <= '0;
             next_label_cnt <= 'd1;
+            for (int i=0; i<IMG_WIDTH; i++) begin
+                line_buf[i] <= '0;
+            end
         end else begin
             if (valid_q) begin
                 line_buf[x_cnt > 0 ? x_cnt - 1 : IMG_WIDTH - 1] <= out_label;
@@ -138,9 +137,6 @@ module ccl_pass1_labeler #(
         end
     end
 
-    // ==========================================
-    // Block 6: Output Stream Assignments
-    // ==========================================
     assign m_axis_tdata  = out_label;
     assign m_axis_tvalid = valid_q;
     assign m_axis_tuser  = user_q;

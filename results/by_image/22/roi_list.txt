@@ -1,0 +1,2 @@
+# roi_id xmin xmax ymin ymax label
+0 641 678 600 638 57

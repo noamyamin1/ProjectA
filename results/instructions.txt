@@ -1,7 +1,0 @@
-Overall goal:
-This is a HW Traffic sogns detector project, the block should output the right "sign code" for the detected sign from the input image.
-All the pipeline stages are here to extract the roi where is the best possibility to have a sign and then to match it with our templates to decide what sign is it.
-1) the module is designed to detect one sign - geomtry filter outputs only one ROI stats - match the golden model to it.
-2) the CCL comparisons are too wide - I need to focus only on did I got the "sign" component to the geometry filter correctly and then did they pass it?
-3) The rtl ccl resolved remains empty - you compare the CCL before resolving - you need to have a script that looks ant pass1 outputs and at parant ram and combines it to CCL image resolved 
-4) I want the whole verification process to be targeted to these goals - did our block worked correctly? - If Yes show each step - If not show what stage broke it and the stats or cause. 

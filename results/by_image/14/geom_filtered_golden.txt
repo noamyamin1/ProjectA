@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax area perimeter
+1 1604 1668 618 677 995 320

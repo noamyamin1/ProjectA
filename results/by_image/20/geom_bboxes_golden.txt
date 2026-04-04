@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+29 1706 1739 710 741

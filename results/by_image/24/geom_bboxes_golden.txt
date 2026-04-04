@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+49 224 305 510 586

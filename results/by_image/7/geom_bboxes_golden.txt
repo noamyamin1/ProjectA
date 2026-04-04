@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+15 1789 1835 593 643

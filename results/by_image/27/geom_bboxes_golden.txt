@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax
+78 386 443 638 696

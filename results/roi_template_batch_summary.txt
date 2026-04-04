@@ -1,0 +1,2 @@
+ROI+Template batch run
+pyton/pics_bank/11.png roi_template: PASS

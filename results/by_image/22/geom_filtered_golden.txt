@@ -1,0 +1,2 @@
+# label xmin xmax ymin ymax area perimeter
+57 641 678 600 638 398 183

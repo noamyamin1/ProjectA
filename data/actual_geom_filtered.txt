@@ -1,6 +1,0 @@
-# RTL Geometry Filter Output - Valid Signs Detected
-# Format: label_id area centroid_x centroid_y xmin xmax ymin ymax width height
-# Goal: Detect 1 sign that passes area constraints (50-100k pixels)
-
-0 1 0 0 0 0 0 0 1 1
-0 1 0 0 0 0 0 0 1 1

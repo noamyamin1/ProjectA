@@ -2,8 +2,8 @@
 
 module tb_morphology_filter_image;
 
-    localparam int IMG_WIDTH = 2872;
-    localparam int IMG_HEIGHT = 1617;
+    localparam int IMG_WIDTH = 1920;
+    localparam int IMG_HEIGHT = 1080;
     localparam int TOTAL_PIXELS = IMG_WIDTH * IMG_HEIGHT;
     
     logic clk;
@@ -53,15 +53,15 @@ module tb_morphology_filter_image;
         s_axis_tlast = 0;
         m_axis_tready = 1'b1; 
 
-        fd_in = $fopen("/users/epnyrk/Project/design/work/ProjectA/sv/mask_out.txt", "r");
+        fd_in = $fopen("design/work/ProjectA/data/mask_out.txt", "r");
         if (!fd_in) begin
             $display("Error opening mask_out.txt");
             $finish;
         end
 
-        fd_out = $fopen("/users/epnyrk/Project/design/work/ProjectA/sv/morph_out.txt", "w");
+        fd_out = $fopen("design/work/ProjectA/data/actual_morph_out.txt", "w");
         if (!fd_out) begin
-            $display("Error opening morph_out.txt");
+            $display("Error opening actual_morph_out.txt");
             $finish;
         end
 

@@ -1,0 +1,28 @@
+3 - fail (label should not pass)
+4 - fail (triangle lable should pass)
+5 - fail (lable should not pass it's too small)
+6 - pass
+7 - pass
+8 - pass
+9 - fail (lable should not pass it's too small)
+10 - pass
+11 - pass
+12 - pass
+13 - pass
+14 - ccl got wrong input
+15 - pass
+16 - pass
+17 - pass
+18 - pass
+19 - pass
+20 - pass
+21 - pass
+22 - pass
+23 - fail (wrong labled chosen - should choose the trangle in the left side)
+24 - pass
+25 - pass
+26 - pass
+27 - fail (wrong labled chosen - should choose one of the perfect circles in the left side or the right side)
+bumpers - fail (should choose the triangle lable 4 i think)
+slippery_road - pass
+slippery_road_redcar - pass

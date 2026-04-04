@@ -3,8 +3,8 @@
 module tb_red_mask_datapath_image;
 
     localparam int TDATA_W = 24;
-    localparam int IMG_WIDTH = 2872;
-    localparam int IMG_HEIGHT = 1617;
+    localparam int IMG_WIDTH = 1920;
+    localparam int IMG_HEIGHT = 1080;
     localparam int TOTAL_PIXELS = IMG_WIDTH * IMG_HEIGHT;
     
     logic clk;
@@ -21,6 +21,7 @@ module tb_red_mask_datapath_image;
     
     logic m_axis_tdata;
     logic m_axis_tvalid;
+    logic m_axis_tready;
     logic m_axis_tuser;
     logic m_axis_tlast;
 
@@ -38,6 +39,7 @@ module tb_red_mask_datapath_image;
         .s_axis_tlast(s_axis_tlast),
         .m_axis_tdata(m_axis_tdata),
         .m_axis_tvalid(m_axis_tvalid),
+        .m_axis_tready(m_axis_tready),
         .m_axis_tuser(m_axis_tuser),
         .m_axis_tlast(m_axis_tlast)
     );
@@ -56,16 +58,17 @@ module tb_red_mask_datapath_image;
         s_axis_tvalid = 0;
         s_axis_tuser = 0;
         s_axis_tlast = 0;
+        m_axis_tready = 1'b1;
 
-        fd_in = $fopen("/users/epnyrk/Project/design/work/ProjectA/sv/image_in.hex", "r");
+        fd_in = $fopen("design/work/ProjectA/data/image_in.hex", "r");
         if (!fd_in) begin
-            $display("Error opening image_in.hex");
+            $display("ERROR: Could not open image_in.hex in data directory");
             $finish;
         end
 
-        fd_out = $fopen("mask_out.txt", "w");
+        fd_out = $fopen("design/work/ProjectA/data/actual_mask_out.txt", "w");
         if (!fd_out) begin
-            $display("Error opening mask_out.txt");
+            $display("ERROR: Could not open actual_mask_out.txt in data directory");
             $finish;
         end
 
@@ -76,7 +79,7 @@ module tb_red_mask_datapath_image;
             @(posedge clk);
             s_axis_tvalid <= 1'b1;
             
-            $fscanf(fd_in, "%h\n", s_axis_tdata);
+            void'($fscanf(fd_in, "%h\n", s_axis_tdata));
             
             s_axis_tuser <= (i == 0);
             s_axis_tlast <= ((i + 1) % IMG_WIDTH == 0);
@@ -98,7 +101,7 @@ module tb_red_mask_datapath_image;
         
         forever begin
             @(posedge clk);
-            if (m_axis_tvalid) begin
+            if (m_axis_tvalid && m_axis_tready) begin
                 $fdisplay(fd_out, "%b", m_axis_tdata);
                 pixels_received++;
                 

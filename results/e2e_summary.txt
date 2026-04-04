@@ -1,0 +1,28 @@
+E2E SUMMARY
+mode=multi
+frames=21
+golden_root=/users/epnyrk/Project/design/work/ProjectA/results/by_image
+out_root=/users/epnyrk/Project/design/work/ProjectA/results/by_image
+
+Pass Frame            Mask     Morph    CCL      Geom     AXI      Tmpl     Total    Detected Template     Detection        Result      
+0    11.png           0        0        0        0        0        0        0        YES      100 vel      CORRECT          PASS        
+0    12.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    13.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    14.png           0        0        0        0        0        0        0        YES      left turn    CORRECT          PASS        
+0    15.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    16.png           0        0        0        0        0        0        0        YES      100 vel      CORRECT          PASS        
+0    17.png           0        0        0        0        0        0        0        YES      70 vel       CORRECT          PASS        
+0    18.png           0        0        0        0        0        0        0        YES      50 vel       CORRECT          PASS        
+0    19.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    20.png           0        0        0        0        0        0        0        YES      urban area   CORRECT          PASS        
+0    21.png           0        0        0        0        0        0        0        YES      urban area   CORRECT          PASS        
+0    22.png           0        0        0        0        0        0        0        YES      road works   CORRECT          PASS        
+0    23.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    24.png           0        0        0        0        0        0        0        YES      road works   CORRECT          PASS        
+0    25.png           0        0        0        0        0        0        0        YES      60 vel       CORRECT          PASS        
+0    27.png           0        0        0        0        0        0        0        YES      60 vel       CORRECT          PASS        
+0    6.png            0        0        0        0        0        0        0        YES      70 vel       CORRECT          PASS        
+0    7.png            0        0        0        0        0        0        0        YES      no right turn CORRECT          PASS        
+0    slippery_road_redcar.jpg 0        0        0        0        0        0        0        YES      slippery 2   CORRECT          PASS        
+0    2.jpeg           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    5.jpeg           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        

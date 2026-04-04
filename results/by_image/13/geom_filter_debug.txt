@@ -1,0 +1,8 @@
+# label area perimeter xmin xmax ymin ymax width height spatial_area pass_area pass_dims pass_pix_area pass_aspect pass_circ pass_fill pass_fill_min
+5 134 74 1325 1361 706 711 37 6 222 0 0 0 0 1 0 1
+1 9 9 1338 1342 682 685 5 4 20 0 0 0 1 1 1 1
+4 2 2 1337 1337 686 687 1 2 2 0 0 0 0 1 0 1
+12 2 2 32 33 737 737 2 1 2 0 0 0 0 1 0 1
+11 1 1 9 9 737 737 1 1 1 0 0 0 1 1 0 1
+13 1 1 39 39 737 737 1 1 1 0 0 0 1 1 0 1
+14 1 1 230 230 887 887 1 1 1 0 0 0 1 1 0 1

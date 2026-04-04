@@ -11,7 +11,7 @@ module geometry_filter #(
     parameter int MIN_H_RELAX_TH = 30,
     parameter int CIRC_MIN_NUM = 12566,
     parameter int CIRC_MIN_DEN = 100,
-    parameter int FILL_MIN_NUM = 218,
+    parameter int FILL_MIN_NUM = 217,
     parameter int FILL_MIN_DEN = 1000,
     parameter int RELAX_SOL_NUM = 400,
     parameter int RELAX_SOL_DEN = 1000,

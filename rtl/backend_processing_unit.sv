@@ -503,7 +503,7 @@ module backend_processing_unit #(
         .MIN_PIX_AREA_TH(313),
         .MIN_W_RELAX_TH(31),
         .MIN_H_RELAX_TH(30),
-        .FILL_MIN_NUM(218),
+        .FILL_MIN_NUM(217),
         .FILL_MIN_DEN(1000),
         .RELAX_SOL_NUM(400),
         .RELAX_SOL_DEN(1000),

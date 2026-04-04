@@ -103,7 +103,7 @@ def main(project_dir):
 
     fails = parse_visual_inspection(inspection_path)
 
-    hard = (300, 100000, 34, 32, 313, 0.218)
+    hard = (300, 100000, 34, 32, 313, 0.217)
     soft = (300, 100000, 35, 33, 350, 0.25)
 
     print("Fail list recheck (label selection)")

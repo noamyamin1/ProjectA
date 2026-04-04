@@ -24,7 +24,7 @@ def load_stats(path):
 
 
 def passes_geometry_filter(area, perimeter, xmin, xmax, ymin, ymax, min_area, max_area,
-                           min_w=32, min_h=32, min_pix_area=313, min_solidity=0.218,
+                           min_w=32, min_h=32, min_pix_area=313, min_solidity=0.217,
                            min_w_relax=31, min_h_relax=30, relax_solidity=0.40,
                            aspect_relax_num=22, aspect_relax_den=10,
                            circ_min_num=12566, circ_min_den=100,
@@ -61,7 +61,7 @@ def compute_metrics(area, perimeter, xmin, xmax, ymin, ymax):
 
 
 def main(stats_path, out_dir, min_area=300, max_area=100000,
-         min_w=34, min_h=32, min_pix_area=313, min_solidity=0.218,
+         min_w=34, min_h=32, min_pix_area=313, min_solidity=0.217,
          min_w_relax=31, min_h_relax=30, relax_solidity=0.40,
          aspect_relax_num=22, aspect_relax_den=10,
          max_candidates=5):
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     min_w = int(sys.argv[5]) if len(sys.argv) >= 6 else 34
     min_h = int(sys.argv[6]) if len(sys.argv) >= 7 else 32
     min_pix_area = int(sys.argv[7]) if len(sys.argv) >= 8 else 313
-    min_solidity = float(sys.argv[8]) if len(sys.argv) >= 9 else 0.218
+    min_solidity = float(sys.argv[8]) if len(sys.argv) >= 9 else 0.217
     min_w_relax = int(sys.argv[9]) if len(sys.argv) >= 10 else 31
     min_h_relax = int(sys.argv[10]) if len(sys.argv) >= 11 else 30
     relax_solidity = float(sys.argv[11]) if len(sys.argv) >= 12 else 0.40

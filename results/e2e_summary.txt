@@ -9,7 +9,7 @@ Pass Frame            Mask     Morph    CCL      Geom     AXI      Tmpl     Tota
 0    12.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
 0    13.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
 0    14.png           0        0        0        0        0        0        0        YES      left turn    CORRECT          PASS        
-0    15.png           0        0        0        0        0        0        0        NO       NO           NO_BBOX_NO_SIGN  PASS        
+0    15.png           0        0        0        0        0        0        0        YES      left intersection CORRECT          PASS        
 0    16.png           0        0        0        0        0        0        0        YES      100 vel      CORRECT          PASS        
 0    17.png           0        0        0        0        0        0        0        YES      70 vel       CORRECT          PASS        
 0    18.png           0        0        0        0        0        0        0        YES      50 vel       CORRECT          PASS        
